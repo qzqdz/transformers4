@@ -649,7 +649,7 @@ def main():
                 loss = loss / args.gradient_accumulation_steps
                 if isinstance(checkpointing_steps, int):
                     if completed_steps % checkpointing_steps == 0:
-                        logger.info(f"loss: {total_loss.item() / len(train_dataloader)}")
+                        logger.info(f"loss: {loss}")
 
                 accelerator.backward(loss)
                 if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:

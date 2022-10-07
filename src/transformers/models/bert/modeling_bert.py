@@ -1496,7 +1496,7 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
             attentions=outputs.attentions,
         )
 
-
+# 文本分类处
 @add_start_docstrings(
     """
     Bert Model transformer with a sequence classification/regression head on top (a linear layer on top of the pooled
@@ -1504,8 +1504,7 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-# 文本分类处
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1607,20 +1606,21 @@ class BertForSequenceClassification(BertPreTrainedModel):
         )
 
 
+# 修改处
 @add_start_docstrings(
     """
     this bert model is modified.
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.config = config
 
-        self.bert_a = BertModel(config)
-        self.bert_b = BertModel(config)
+        self.bert = BertModel(config)
+        # self.bert_b = BertModel(config)
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
         )
@@ -1678,10 +1678,15 @@ class BertForSequenceClassification1(BertPreTrainedModel):
             return_dict=return_dict,
         )
 
+
         pooled_output = outputs[1]
 
-        pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)
+        pooled_output_a = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output_a)
+
+        pooled_output_b = self.dropout(pooled_output)
+        logits_b = self.classifier(pooled_output_b)
+
 
         loss = None
         if labels is not None:
@@ -1693,6 +1698,7 @@ class BertForSequenceClassification1(BertPreTrainedModel):
                 else:
                     self.config.problem_type = "multi_label_classification"
 
+
             # print(self.config.problem_type)
             if self.config.problem_type == "regression":
                 loss_fct = MSELoss()
@@ -1700,17 +1706,28 @@ class BertForSequenceClassification1(BertPreTrainedModel):
                     loss = loss_fct(logits.squeeze(), labels.squeeze())
                 else:
                     loss = loss_fct(logits, labels)
+
             elif self.config.problem_type == "single_label_classification":
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+
             elif self.config.problem_type == "multi_label_classification":
-                loss_fct = BCEWithLogitsLoss()
-                loss = loss_fct(logits, labels)
+
+                loss_fct_a = BCEWithLogitsLoss()
+                loss_a = loss_fct_a(logits, labels)
+
+                loss_fct_b = BCEWithLogitsLoss()
+                loss_b = loss_fct_b(logits_b, labels)
+
+                kl = self.compute_kl_loss(logits, logits_b)*5
+                loss = (loss_a + loss_b)/2 + kl
 
 
         if not return_dict:
             output = (logits,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
+
+
 
         return SequenceClassifierOutput(
             loss=loss,
@@ -1718,6 +1735,7 @@ class BertForSequenceClassification1(BertPreTrainedModel):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
+
 
 @add_start_docstrings(
     """
