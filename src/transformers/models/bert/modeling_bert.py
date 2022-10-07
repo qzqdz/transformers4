@@ -1739,7 +1739,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
                 loss = torch.add(loss,loss_b)
                 loss = torch.div(loss,2)
-                kl = torch.mul(kl,30)
+                kl = torch.mul(kl,50)
                 loss = torch.add(loss,kl)
 
         if not return_dict:
