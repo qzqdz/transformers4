@@ -193,7 +193,7 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_
 
 
 train for test
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/bert_for_test     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True   --max_length 64    --per_device_eval_batch_size 32    --num_train_epochs 3     --output_dir E:/model/transformers4/bert_for_test/output_dir/
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/bert_for_test     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True   --max_length 64    --per_device_eval_batch_size 16    --num_train_epochs 3     --output_dir E:/model/transformers4/bert_for_test/output_dir/  --checkpointing_steps 100
 
 
 

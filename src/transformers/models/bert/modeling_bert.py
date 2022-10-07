@@ -1598,6 +1598,8 @@ class BertForSequenceClassification1(BertPreTrainedModel):
             output = (logits,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
 
+
+
         return SequenceClassifierOutput(
             loss=loss,
             logits=logits,
@@ -1620,7 +1622,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
         self.config = config
 
         self.bert = BertModel(config)
-        # self.bert_b = BertModel(config)
+        self.bert_b = BertModel(config)
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
         )
@@ -1631,9 +1633,11 @@ class BertForSequenceClassification(BertPreTrainedModel):
         self.post_init()
 
     def compute_kl_loss(self, output_a, output_b, loss_name='mean'):
-        output_a = torch.softmax(output_a, dim=-1)
-        output_b = torch.softmax(output_b, dim=-1)
-        kl = torch.nn.functional.kl_div(output_a.log2(), output_b.log2(), reduction=loss_name)
+        log_output_a = torch.nn.functional.log_softmax(output_a,dim=-1)
+        log_output_b = torch.nn.functional.log_softmax(output_b,dim=-1)
+        sm_output_a = torch.nn.functional.softmax(output_a,dim=-1)
+        sm_output_b = torch.nn.functional.softmax(output_b,dim=-1)
+        kl = torch.add(torch.nn.functional.kl_div(log_output_a,sm_output_b,reduction=loss_name),torch.nn.functional.kl_div(log_output_b,sm_output_a,reduction=loss_name))
         return kl
 
     @add_start_docstrings_to_model_forward(BERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
@@ -1678,15 +1682,28 @@ class BertForSequenceClassification(BertPreTrainedModel):
             return_dict=return_dict,
         )
 
+        outputs_b = self.bert_b(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
 
         pooled_output = outputs[1]
 
-        pooled_output_a = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output_a)
+        pooled_output = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output)
 
-        pooled_output_b = self.dropout(pooled_output)
+
+
+        pooled_output_b = outputs_b[1]
+        pooled_output_b = self.dropout(pooled_output_b)
         logits_b = self.classifier(pooled_output_b)
-
 
         loss = None
         if labels is not None:
@@ -1712,16 +1729,18 @@ class BertForSequenceClassification(BertPreTrainedModel):
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
 
             elif self.config.problem_type == "multi_label_classification":
-
                 loss_fct_a = BCEWithLogitsLoss()
-                loss_a = loss_fct_a(logits, labels)
+                loss = loss_fct_a(logits, labels)
 
                 loss_fct_b = BCEWithLogitsLoss()
                 loss_b = loss_fct_b(logits_b, labels)
 
-                kl = self.compute_kl_loss(logits, logits_b)*5
-                loss = (loss_a + loss_b)/2 + kl
+                kl = self.compute_kl_loss(logits, logits_b)
 
+                loss = torch.add(loss,loss_b)
+                loss = torch.div(loss,2)
+                kl = torch.mul(kl,30)
+                loss = torch.add(loss,kl)
 
         if not return_dict:
             output = (logits,) + outputs[2:]
