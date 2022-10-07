@@ -48,6 +48,7 @@ from ...utils import (
     add_start_docstrings_to_model_forward,
     logging,
     replace_return_docstrings,
+    util_loss
 )
 from .configuration_bert import BertConfig
 
@@ -1504,7 +1505,7 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1590,7 +1591,11 @@ class BertForSequenceClassification1(BertPreTrainedModel):
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
-                loss_fct = BCEWithLogitsLoss()
+                # loss_fct = BCEWithLogitsLoss()
+                loss_fct = util_loss.ResampleLoss(reweight_func=None, loss_weight=1.0,
+                                         focal=dict(focal=True, alpha=0.5, gamma=2),
+                                         logit_reg=dict(),
+                                         class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330], train_num=90000)
                 loss = loss_fct(logits, labels)
 
 
@@ -1615,7 +1620,7 @@ class BertForSequenceClassification1(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1699,8 +1704,6 @@ class BertForSequenceClassification(BertPreTrainedModel):
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
 
-
-
         pooled_output_b = outputs_b[1]
         pooled_output_b = self.dropout(pooled_output_b)
         logits_b = self.classifier(pooled_output_b)
@@ -1745,8 +1748,6 @@ class BertForSequenceClassification(BertPreTrainedModel):
         if not return_dict:
             output = (logits,) + outputs[2:]
             return ((loss,) + output) if loss is not None else output
-
-
 
         return SequenceClassifierOutput(
             loss=loss,
