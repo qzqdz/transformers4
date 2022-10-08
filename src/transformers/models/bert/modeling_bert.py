@@ -1506,7 +1506,7 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1590,7 +1590,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
-                loss_func_name = 'R-BCE-Focal'
+                loss_func_name = 'BCE'
                 class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
                 train_num = 90000
                 if loss_func_name == 'FL':
@@ -1666,14 +1666,13 @@ class BertForSequenceClassification(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.config = config
-
         self.bert = BertModel(config)
-        self.bert_b = BertModel(config)
+
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
         )
@@ -1683,13 +1682,6 @@ class BertForSequenceClassification1(BertPreTrainedModel):
         # Initialize weights and apply final processing
         self.post_init()
 
-    def compute_kl_loss(self, output_a, output_b, loss_name='mean'):
-        log_output_a = torch.nn.functional.log_softmax(output_a,dim=-1)
-        log_output_b = torch.nn.functional.log_softmax(output_b,dim=-1)
-        sm_output_a = torch.nn.functional.softmax(output_a,dim=-1)
-        sm_output_b = torch.nn.functional.softmax(output_b,dim=-1)
-        kl = torch.add(torch.nn.functional.kl_div(log_output_a,sm_output_b,reduction=loss_name),torch.nn.functional.kl_div(log_output_b,sm_output_a,reduction=loss_name))
-        return kl
 
     @add_start_docstrings_to_model_forward(BERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
@@ -1721,38 +1713,27 @@ class BertForSequenceClassification1(BertPreTrainedModel):
         """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
-        outputs = self.bert(
-            input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            position_ids=position_ids,
-            head_mask=head_mask,
-            inputs_embeds=inputs_embeds,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
-        )
 
-        outputs_b = self.bert_b(
-            input_ids,
-            attention_mask=attention_mask,
-            token_type_ids=token_type_ids,
-            position_ids=position_ids,
-            head_mask=head_mask,
-            inputs_embeds=inputs_embeds,
-            output_attentions=output_attentions,
-            output_hidden_states=output_hidden_states,
-            return_dict=return_dict,
-        )
+        outputs_lst = []
+        logits_lst = []
+        for i in range(2):
+            outputs = self.bert(
+                input_ids,
+                attention_mask=attention_mask,
+                token_type_ids=token_type_ids,
+                position_ids=position_ids,
+                head_mask=head_mask,
+                inputs_embeds=inputs_embeds,
+                output_attentions=output_attentions,
+                output_hidden_states=output_hidden_states,
+                return_dict=return_dict,
+            )
 
-        pooled_output = outputs[1]
-
-        pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)
-
-        pooled_output_b = outputs_b[1]
-        pooled_output_b = self.dropout(pooled_output_b)
-        logits_b = self.classifier(pooled_output_b)
+            pooled_output = outputs[1]
+            pooled_output = self.dropout(pooled_output)
+            logits = self.classifier(pooled_output)
+            logits_lst.append(logits)
+            outputs_lst.append(outputs)
 
         loss = None
         if labels is not None:
@@ -1763,43 +1744,112 @@ class BertForSequenceClassification1(BertPreTrainedModel):
                     self.config.problem_type = "single_label_classification"
                 else:
                     self.config.problem_type = "multi_label_classification"
-
-
-            # print(self.config.problem_type)
+        alpha_ = 1.0
+        for logits in logits_lst:
             if self.config.problem_type == "regression":
                 loss_fct = MSELoss()
                 if self.num_labels == 1:
-                    loss = loss_fct(logits.squeeze(), labels.squeeze())
+                    if loss:
+                        loss +=alpha_ * loss_fct(logits.squeeze(), labels.squeeze())
+                    else:
+                        loss = alpha_ * loss_fct(logits.squeeze(), labels.squeeze())
                 else:
-                    loss = loss_fct(logits, labels)
+                    if loss:
+                        loss += alpha_ * loss_fct(logits, labels)
+                    else:
+                        loss = alpha_ * loss_fct(logits, labels)
 
             elif self.config.problem_type == "single_label_classification":
                 loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+
+                if loss:
+                    loss += alpha_* loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                else:
+                    loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
 
             elif self.config.problem_type == "multi_label_classification":
-                loss_fct_a = BCEWithLogitsLoss()
-                loss = loss_fct_a(logits, labels)
+                loss_func_name = 'BCE'
+                class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
+                train_num = 90000
+                if loss_func_name == 'FL':
+                    loss_fct = util_loss.ResampleLoss(reweight_func=None, loss_weight=1.0,
+                                             focal=dict(focal=True, alpha=0.5, gamma=2),
+                                             logit_reg=dict(),
+                                             class_freq=class_freq, train_num=train_num)
 
-                loss_fct_b = BCEWithLogitsLoss()
-                loss_b = loss_fct_b(logits_b, labels)
+                elif loss_func_name == 'CBloss':
+                    loss_fct = util_loss.ResampleLoss(reweight_func='CB', loss_weight=5.0,
+                                             focal=dict(focal=True, alpha=0.5, gamma=2),
+                                             logit_reg=dict(),
+                                             CB_loss=dict(CB_beta=0.9, CB_mode='by_class'),
+                                             class_freq=class_freq, train_num=train_num)
 
-                kl = self.compute_kl_loss(logits, logits_b)
+                elif loss_func_name == 'R-BCE-Focal':  # R-FL
+                    loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=1.0,
+                                             focal=dict(focal=True, alpha=0.5, gamma=2),
+                                             logit_reg=dict(),
+                                             map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
+                                             class_freq=class_freq, train_num=train_num)
 
-                loss = torch.add(loss,loss_b)
-                loss = torch.div(loss,2)
-                kl = torch.mul(kl,50)
-                loss = torch.add(loss,kl)
+                elif loss_func_name == 'NTR-Focal':  # NTR-FL
+                    loss_fct = util_loss.ResampleLoss(reweight_func=None, loss_weight=0.5,
+                                             focal=dict(focal=True, alpha=0.5, gamma=2),
+                                             logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                             class_freq=class_freq, train_num=train_num)
+
+                elif loss_func_name == 'DBloss-noFocal':  # DB-0FL
+                    loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=0.5,
+                                             focal=dict(focal=False, alpha=0.5, gamma=2),
+                                             logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                             map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
+                                             class_freq=class_freq, train_num=train_num)
+
+                elif loss_func_name == 'CBloss-ntr':  # CB-NTR
+                    loss_fct = util_loss.ResampleLoss(reweight_func='CB', loss_weight=10.0,
+                                             focal=dict(focal=True, alpha=0.5, gamma=2),
+                                             logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                             CB_loss=dict(CB_beta=0.9, CB_mode='by_class'),
+                                             class_freq=class_freq, train_num=train_num)
+
+                elif loss_func_name == 'DBloss':  # DB
+                    loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=1.0,
+                                             focal=dict(focal=True, alpha=0.5, gamma=2),
+                                             logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                             map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
+                                             class_freq=class_freq, train_num=train_num)
+
+                else:
+                    loss_fct = BCEWithLogitsLoss()
+
+                if loss:
+                    loss += alpha_ * loss_fct(logits, labels)
+                else:
+                    loss = alpha_ * loss_fct(logits, labels)
+
+        if loss is not None:
+            if self.num_labels == 1:
+                loss_fct = MSELoss()
+                loss += 1.0 * loss_fct(logits_lst[0].view(-1), logits_lst[-1].view(-1))
+            else:
+                p = torch.log_softmax(logits_lst[0].view(-1, self.num_labels), dim=-1)
+                p_tec = torch.softmax(logits_lst[0].view(-1, self.num_labels), dim=-1)
+                q = torch.log_softmax(logits_lst[-1].view(-1, self.num_labels), dim=-1)
+                q_tec = torch.softmax(logits_lst[-1].view(-1, self.num_labels), dim=-1)
+
+                kl_loss = torch.nn.functional.kl_div(p, q_tec, reduction='none').sum()
+                reverse_kl_loss = torch.nn.functional.kl_div(q, p_tec, reduction='none').sum()
+                loss += 0.5 * (kl_loss + reverse_kl_loss) / 2.
+
 
         if not return_dict:
-            output = (logits,) + outputs[2:]
+            output = (logits_lst[0],) + outputs_lst[0][2:]
             return ((loss,) + output) if loss is not None else output
 
         return SequenceClassifierOutput(
             loss=loss,
-            logits=logits,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
+            logits=logits_lst[0],
+            hidden_states=outputs_lst[0].hidden_states,
+            attentions=outputs_lst[0].attentions,
         )
 
 
