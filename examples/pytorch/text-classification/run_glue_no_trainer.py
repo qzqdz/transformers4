@@ -243,14 +243,16 @@ class muticheck:
         self.references = []
         self.eval_metric = {}
 
-    def check(self):
-        predictions = np.array([p.cpu().numpy() for p in self.predictions])
+    def check(self,predictions_=None):
+        if predictions_ is not None:
+            predictions = np.array(predictions_.cpu().numpy())
+        else:
+            predictions = np.array([p.cpu().numpy() for p in self.predictions])
+
         label = np.array([r.cpu().numpy() for r in self.references])
         self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
         self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
         self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
-
-
 
         # for metric_way in self.check_method:
         #     metric = evaluate.load(metric_way)
@@ -260,17 +262,19 @@ class muticheck:
         #     )
         #     self.eval_metric.update(metric.compute())
         # print(self.eval_metric)
+        # self.predictions = predictions
+        # self.references = label
         # print(f"r-macro:{recall_score(self.predictions,self.references,average='macro')}")
         # print(f"r-micro:{recall_score(self.predictions,self.references,average='micro')}")
-        # print(f"r-binary:{recall_score(self.predictions, self.references)}")
+        # # print(f"r-binary:{recall_score(self.predictions, self.references)}")
         # print(f"r-samples:{recall_score(label, predictions, average='samples')}")
-        # print(f"f1-macro:{f1_score(self.predictions, self.references, average='macro')}")
-        # print(f"f1-micro:{f1_score(self.predictions, self.references, average='micro')}")
-        # print(f"f1-binary:{f1_score(self.predictions, self.references)}")
+        # print(f"f1-macro:{f1_score(self.predictions, self.references, average='macro',zero_division=0)}")
+        # print(f"f1-micro:{f1_score(self.predictions, self.references, average='micro',zero_division=0)}")
+        # # print(f"f1-binary:{f1_score(self.predictions, self.references)}")
         # print(f"f-samples:{f1_score(label, predictions, average='samples')}")
         # print(f"p-macro:{precision_score(self.predictions, self.references, average='macro')}")
         # print(f"p-micro:{precision_score(self.predictions, self.references, average='micro')}")
-        # print(f"p-binary:{precision_score(self.predictions, self.references)}")
+        # # print(f"p-binary:{precision_score(self.predictions, self.references)}")
         # print(f"p-samples:{precision_score(label,predictions, average='samples')}")
         # print(f"acc:{accuracy_score(self.predictions, self.references)}")
         # print(f"p,r,f:{precision_recall_fscore_support(self.predictions, self.references,average='binary')}")
@@ -395,8 +399,7 @@ def main():
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(args.model_name_or_path, num_labels=num_labels, finetuning_task=args.task_name)
-    print('ok_check!!')
-    print(config)
+
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name_or_path,
@@ -631,11 +634,10 @@ def main():
                 resume_step -= starting_epoch * len(train_dataloader)
 
         for epoch in range(starting_epoch, args.num_train_epochs):
-            model.train()
             if args.with_tracking:
                 total_loss = 0
             for step, batch in enumerate(train_dataloader):
-
+                model.train()
                 # We need to skip steps until we reach the resumed step
                 if args.resume_from_checkpoint and epoch == starting_epoch:
                     if resume_step is not None and step < resume_step:
@@ -667,12 +669,12 @@ def main():
                         if args.output_dir is not None:
                             output_dir = os.path.join(args.output_dir, output_dir)
                         accelerator.save_state(output_dir)
-
                         model.eval()
                         if args.multicheck:
                             # not supprot accelerator
-
                             check_batch_mun = 100
+                            metric.predictions=[]
+                            metric.references=[]
                             if len(label_list) > 1:
                                 for step, batch in enumerate(tqdm(eval_dataloader)):
                                     if check_batch_mun<=0:
@@ -680,10 +682,11 @@ def main():
                                     with torch.no_grad():
                                         outputs = model(**batch)
                                     predictions = torch.sigmoid(outputs.logits.squeeze())
-                                    predictions = torch.ge(predictions, 0.5).type(torch.int)
-                                    metric.predictions.extend(predictions)
+                                    # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                                    metric.predictions.extend(predictions.cpu().detach().tolist())
                                     metric.references.extend(batch["labels"].type(torch.int))
                                     # check_batch_mun-=1
+
                             else:
                                 for step, batch in enumerate(tqdm(eval_dataloader)):
                                     if check_batch_mun<=0:
@@ -695,9 +698,32 @@ def main():
                                     metric.predictions.extend(predictions)
                                     metric.references.extend(batch["labels"])
                                     # check_batch_mun -= 1
-                            metric.eval_metric = {}
-                            metric.check()
-                            logger.info(f"checkpoint:{metric.eval_metric}")
+
+                            if len(label_list) > 1:
+                                best_th = 0.5
+                                default_th = 0.5
+                                best_dir = {}
+                                thresholds = (np.array(range(-15, 6)) / 100) + default_th
+                                best_f1 = 0
+                                metric.predictions = torch.tensor(metric.predictions,
+                                                                  device='cuda' if torch.cuda.is_available() else 'cpu')
+                                for threshold in thresholds:
+                                    metric.eval_metric = {}
+                                    predictions = torch.ge(metric.predictions,threshold).type(torch.int)
+                                    # print(predictions)
+                                    metric.check(predictions)
+                                    if metric.eval_metric['f1']>best_f1:
+                                        best_f1 = metric.eval_metric['f1']
+                                        best_dir = metric.eval_metric
+                                        best_th = threshold
+                                if best_dir:
+                                    metric.eval_metric = best_dir
+                                logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
+
+                            else:
+                                metric.eval_metric = {}
+                                metric.check()
+                                logger.info(f"checkpoint:{metric.eval_metric}")
                             if args.with_tracking:
                                 accelerator.log(
                                     {
@@ -714,15 +740,18 @@ def main():
 
             model.eval()
             if args.multicheck:
+                metric.predictions = []
+                metric.references = []
                 # not supprot accelerator
                 if len(label_list)>1:
                     for step, batch in enumerate(tqdm(eval_dataloader)):
                         with torch.no_grad():
                             outputs = model(**batch)
                         predictions = torch.sigmoid(outputs.logits.squeeze())
-                        predictions = torch.ge(predictions, 0.5).type(torch.int)
-                        metric.predictions.extend(predictions)
+                        # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                        metric.predictions.extend(predictions.cpu().detach().tolist())
                         metric.references.extend(batch["labels"].type(torch.int))
+                        # check_batch_mun-=1
                 else:
                     for step, batch in enumerate(tqdm(eval_dataloader)):
                         with torch.no_grad():
@@ -730,9 +759,31 @@ def main():
                         predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
                         metric.predictions.extend(predictions)
                         metric.references.extend(batch["labels"])
-                metric.eval_metric = {}
-                metric.check()
-                logger.info(f"epoch {epoch}: {metric.eval_metric}")
+
+
+                if len(label_list) > 1:
+                    default_th = 0.5
+                    best_th = 0.5
+                    best_dir = {}
+                    thresholds = (np.array(range(-10, 11)) / 100) + default_th
+                    best_f1 = 0
+                    metric.predictions = torch.tensor(metric.predictions,
+                                                      device='cuda' if torch.cuda.is_available() else 'cpu')
+                    for threshold in thresholds:
+                        metric.eval_metric = {}
+                        predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+                        metric.check(predictions)
+                        if metric.eval_metric['f1'] > best_f1:
+                            best_f1 = metric.eval_metric['f1']
+                            best_dir = metric.eval_metric
+                            best_th = threshold
+                    if best_dir:
+                        metric.eval_metric = best_dir
+                    logger.info(f"epoch {epoch}: {metric.eval_metric};best_th:{best_th}")
+                else:
+                    metric.eval_metric = {}
+                    metric.check()
+                    logger.info(f"epoch {epoch}: {metric.eval_metric}")
 
                 if args.with_tracking:
                     accelerator.log(
@@ -825,15 +876,18 @@ def main():
 
     model.eval()
     if args.multicheck:
+        metric.predictions = []
+        metric.references = []
         # not supprot accelerator
         if len(label_list) > 1:
             for step, batch in enumerate(tqdm(eval_dataloader)):
                 with torch.no_grad():
                     outputs = model(**batch)
                 predictions = torch.sigmoid(outputs.logits.squeeze())
-                predictions = torch.ge(predictions, 0.5).type(torch.int)
-                metric.predictions.extend(predictions)
+                # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                metric.predictions.extend(predictions.cpu().detach().tolist())
                 metric.references.extend(batch["labels"].type(torch.int))
+                # check_batch_mun-=1
         else:
             for step, batch in enumerate(tqdm(eval_dataloader)):
                 with torch.no_grad():
@@ -841,9 +895,32 @@ def main():
                 predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
                 metric.predictions.extend(predictions)
                 metric.references.extend(batch["labels"])
-        metric.eval_metric = {}
-        metric.check()
-        logger.info(f"eval_res: {metric.eval_metric}")
+
+        if len(label_list) > 1:
+            best_th = 0.5
+            default_th = 0.5
+            best_dir = {}
+            thresholds = (np.array(range(-10, 11)) / 100) + default_th
+            best_f1 = 0
+            metric.predictions = torch.tensor(metric.predictions,
+                                              device='cuda' if torch.cuda.is_available() else 'cpu')
+            for threshold in thresholds:
+                metric.eval_metric = {}
+                predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+                metric.check(predictions)
+                if metric.eval_metric['f1'] > best_f1:
+                    best_f1 = metric.eval_metric['f1']
+                    best_dir = metric.eval_metric
+                    best_th = threshold
+            if best_dir:
+                metric.eval_metric = best_dir
+            logger.info(f"best eval_res:{metric.eval_metric};threshold:{best_th}")
+
+        else:
+            metric.eval_metric = {}
+            metric.check()
+            logger.info(f"eval_res:{metric.eval_metric}")
+
         if args.output_dir is not None:
             with open(os.path.join(args.output_dir, "all_results.json"), "w") as f:
                 json.dump(metric.eval_metric,f)
