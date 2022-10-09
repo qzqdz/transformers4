@@ -703,7 +703,7 @@ def main():
                                 best_th = 0.5
                                 default_th = 0.5
                                 best_dir = {}
-                                thresholds = (np.array(range(-15, 6)) / 100) + default_th
+                                thresholds = (np.array(range(-20, 6)) / 100) + default_th
                                 best_f1 = 0
                                 metric.predictions = torch.tensor(metric.predictions,
                                                                   device='cuda' if torch.cuda.is_available() else 'cpu')

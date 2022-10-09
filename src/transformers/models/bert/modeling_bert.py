@@ -1590,7 +1590,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
-                loss_func_name = 'BCE'
+                loss_func_name = 'FL'
                 class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
                 train_num = 90000
                 if loss_func_name == 'FL':

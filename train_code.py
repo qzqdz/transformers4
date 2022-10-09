@@ -288,6 +288,8 @@ python ./examples/run_glue.py     --model_type bert     --model_name_or_path D:/
 
 bert 
 
+
+
 bertbase_lr10_bs3_512_lv3 
 python ./examples/run_glue.py     --model_type bert     --model_name_or_path F:/model/bertbase_lr10_bs3_512_lv3/output_dir/checkpoint-90000    --task_name nlpcct5level3    --do_eval     --do_lower_case     --data_dir D:/data/nlpcct5/training_datasets     --max_seq_length 512     --per_gpu_eval_batch_size=3       --per_gpu_train_batch_size=3       --learning_rate 1e-5     --num_train_epochs 3.0     --output_dir F:/model/bertbase_lr10_bs3_512_lv3/output_dir/checkpoint-90000/
 
@@ -306,6 +308,9 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 
 bertcblossrrop_l10_bs4_256_lv1
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_uncased     --train_file D:/data/nlpcct5/nlpcct5.py  --max_length 256   --do_train True  --report_to wandb    --with_tracking --per_device_eval_batch_size 4  --per_device_train_batch_size 4  --learning_rate 1e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/bertcblossrrop_l10_bs4_256_lv1/ --checkpointing_steps 1000
+
+bertfl_lr20_bs8_256_lv1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_uncased     --train_file D:/data/nlpcct5/nlpcct5.py  --max_length 256   --do_train True  --report_to wandb    --with_tracking --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/bertfl_lr20_bs8_256_lv1/ --checkpointing_steps 1000
 
 
 '''
