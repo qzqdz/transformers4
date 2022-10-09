@@ -499,7 +499,6 @@ def main():
 
     train_dataset = processed_datasets["train"]
     eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
-
     # Log a few random samples from the training set:
     for index in random.sample(range(len(train_dataset)), 3):
         logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
@@ -639,6 +638,7 @@ def main():
             if args.with_tracking:
                 total_loss = 0
             for step, batch in enumerate(train_dataloader):
+                # print(batch)
                 model.train()
                 # We need to skip steps until we reach the resumed step
                 if args.resume_from_checkpoint and epoch == starting_epoch:
@@ -903,9 +903,9 @@ def main():
 
         if len(label_list) > 1:
             best_th = 0.5
-            default_th = 0.5
+            default_th = 0.1
             best_dir = {}
-            thresholds = (np.array(range(-10, 11)) / 100) + default_th
+            thresholds = (np.array(range(-10, 40)) / 100) + default_th
             best_f1 = 0
             metric.predictions = torch.tensor(metric.predictions,
                                               device='cuda' if torch.cuda.is_available() else 'cpu')
@@ -929,6 +929,7 @@ def main():
 
         if args.output_dir is not None:
             with open(os.path.join(args.output_dir, "all_results.json"), "w") as f:
+                print(metric.eval_metric)
                 json.dump(metric.eval_metric,f)
     else:
         for step, batch in enumerate(tqdm(eval_dataloader)):

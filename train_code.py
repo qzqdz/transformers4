@@ -172,6 +172,9 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 nlpcc
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/bert_test_for_4     --train_file E:/data/nlpcct5/nlpcct5.py  --max_length 512   --do_train True  --report_to wandb   --per_device_eval_batch_size 4    --learning_rate 1e-5     --num_train_epochs 3   --output_dir E:/model/bert_test_for_4/output_dir/  --with_tracking
 
+
+
+
 E:/data/nlpcct5/nlpcct5.py
 
 
@@ -205,7 +208,8 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_
 bertrdrop1_lr20_bs8_256_lv1
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True  --report_to wandb   --with_tracking     --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir E:/model/transformers4/bertrdrop1_lr20_bs8_256_lv1/  --checkpointing_steps 1000
 
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True  --report_to wandb   --with_tracking     --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir E:/model/transformers4/bertrdrop1_lr20_bs8_256_lv1_1/  --checkpointing_steps 1000
+berrdropdblossntrfl_lr20_bs8_256_lv1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True  --report_to wandb   --with_tracking     --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir E:/model/transformers4/berrdropdblossntrfl_lr20_bs8_256_lv1/  --checkpointing_steps 1000
 
 
 
@@ -220,6 +224,26 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_
 E:\model\transformers4\bert_for_test\output_dir
 test
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:\model\transformers4\bert_for_test\output_dir     --train_file E:/data/reuters/reuters.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8      --num_train_epochs 3     --output_dir E:/model/transformers4/bert_for_test/output_dir/tt
+
+
+
+find for threshold
+bertbase_lr20_bs8_256_lv1 0.38
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/bertbase_lr20_bs8_256_lv1/output_dir     --train_file E:/data/nlpcct5/nlpcct5.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8      --num_train_epochs 3     --output_dir E:/model/transformers4/bertbase_lr20_bs8_256_lv1/output_dir
+
+bertrdrop1_lr20_bs8_256_lv1_1 0.38
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/bertrdrop1_lr20_bs8_256_lv1_1     --train_file E:/data/nlpcct5/nlpcct5.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8      --num_train_epochs 3     --output_dir E:/model/transformers4/bertrdrop1_lr20_bs8_256_lv1_1
+
+bertrdrop1_lr20_bs8_256_lv1 0.37
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/bertrdrop1_lr20_bs8_256_lv1     --train_file E:/data/nlpcct5/nlpcct5.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8      --num_train_epochs 3     --output_dir E:/model/transformers4/bertrdrop1_lr20_bs8_256_lv1
+
+bertflbce_lr20_bs8_256_lv1 0.46
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/bertflbce_lr20_bs8_256_lv1     --train_file E:/data/nlpcct5/nlpcct5.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8      --num_train_epochs 3     --output_dir E:/model/transformers4/bertflbce_lr20_bs8_256_lv1
+
+bertfl_lr20_bs8_256_lv1 0.45
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/bertfl_lr20_bs8_256_lv1     --train_file E:/data/nlpcct5/nlpcct5.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8      --num_train_epochs 3     --output_dir E:/model/transformers4/bertfl_lr20_bs8_256_lv1
+
+
 
 '''
 
@@ -323,6 +347,8 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 bertrdropfl_lr20_bs8_256_lv1
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path /opt/data/yanyu/white_model/bert_base_uncased     --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5.py   --max_length 256   --do_train True  --report_to tensorboard    --with_tracking --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir /opt/data/yanyu/model/transformers4/bertrdropfl_lr20_bs8_256_lv1/  --checkpointing_steps 1000
 
+bertrdrop_lr20_bs8_256_lv1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path /opt/data/yanyu/white_model/bert_base_uncased     --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5.py   --max_length 256   --do_train True  --report_to wandb    --with_tracking --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir /opt/data/yanyu/model/transformers4/bertrdrop_lr20_bs8_256_lv1/  --checkpointing_steps 1000
 
 '''
 

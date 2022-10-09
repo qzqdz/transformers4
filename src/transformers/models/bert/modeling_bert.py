@@ -1550,6 +1550,7 @@ def loss_choice(loss_func_name,class_freq,train_num):
     return loss_fct
 
 
+
 # 文本分类处
 @add_start_docstrings(
     """
@@ -1559,7 +1560,7 @@ def loss_choice(loss_func_name,class_freq,train_num):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1671,7 +1672,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1773,15 +1774,17 @@ class BertForSequenceClassification1(BertPreTrainedModel):
                     loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
 
             elif self.config.problem_type == "multi_label_classification":
-                loss_func_name = 'CBloss'
+                loss_func_name_1 = 'NTR-Focal'
+                loss_func_name_2 = 'DBloss'
                 class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
                 train_num = 90000
-                loss_fct = loss_choice(loss_func_name, class_freq, train_num)
+                loss_fct_1 = loss_choice(loss_func_name_1, class_freq, train_num)
+                loss_fct_2 = loss_choice(loss_func_name_2, class_freq, train_num)
 
                 if loss:
-                    loss += alpha_ * loss_fct(logits, labels)
+                    loss += alpha_ * loss_fct_1(logits, labels)
                 else:
-                    loss = alpha_ * loss_fct(logits, labels)
+                    loss = alpha_ * loss_fct_2(logits, labels)
 
         if loss is not None:
             if self.num_labels == 1:
