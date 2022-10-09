@@ -253,6 +253,8 @@ class muticheck:
         self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
         self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
         self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
+        self.eval_metric['micro-precision'],self.eval_metric['micro-recall'],self.eval_metric['micro-f1'],_ = precision_recall_fscore_support(label,predictions, average='micro')
+
 
         # for metric_way in self.check_method:
         #     metric = evaluate.load(metric_way)
@@ -701,9 +703,9 @@ def main():
 
                             if len(label_list) > 1:
                                 best_th = 0.5
-                                default_th = 0.5
+                                default_th = 0.4
                                 best_dir = {}
-                                thresholds = (np.array(range(-15, 6)) / 100) + default_th
+                                thresholds = (np.array(range(-11, 10)) / 100) + default_th
                                 best_f1 = 0
                                 metric.predictions = torch.tensor(metric.predictions,
                                                                   device='cuda' if torch.cuda.is_available() else 'cpu')
@@ -719,6 +721,7 @@ def main():
                                 if best_dir:
                                     metric.eval_metric = best_dir
                                 logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
+                                metric.eval_metric['threshold'] = best_th
 
                             else:
                                 metric.eval_metric = {}
@@ -728,6 +731,7 @@ def main():
                                 accelerator.log(
                                     {
                                         "eval_res": metric.eval_metric,
+
                                         "train_loss": total_loss.item() / len(train_dataloader),
                                         "epoch": epoch,
                                         "step": completed_steps,
@@ -780,6 +784,7 @@ def main():
                     if best_dir:
                         metric.eval_metric = best_dir
                     logger.info(f"epoch {epoch}: {metric.eval_metric};best_th:{best_th}")
+                    metric.eval_metric['threshold'] = best_th
                 else:
                     metric.eval_metric = {}
                     metric.check()
@@ -915,6 +920,7 @@ def main():
             if best_dir:
                 metric.eval_metric = best_dir
             logger.info(f"best eval_res:{metric.eval_metric};threshold:{best_th}")
+            metric.eval_metric['threshold'] = best_th
 
         else:
             metric.eval_metric = {}
