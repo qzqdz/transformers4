@@ -24,6 +24,7 @@ from pathlib import Path
 import datasets
 import torch
 from datasets import load_dataset
+from ray import tune
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
@@ -202,6 +203,11 @@ def parse_args():
         default=True,
         help="metric model by calucating acc,p,r,f1",
     )
+    parser.add_argument(
+        "--child_tune",
+        action="store_true",
+        help="to child tune the model.",
+    )
 
 
     args = parser.parse_args()
@@ -253,7 +259,7 @@ class muticheck:
         self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
         self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
         self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
-        self.eval_metric['micro-precision'],self.eval_metric['micro-recall'],self.eval_metric['micro-f1'],_ = precision_recall_fscore_support(label,predictions, average='micro')
+        self.eval_metric['micro-precision'],self.eval_metric['micro-recall'],self.eval_metric['micro-f1'],_ = precision_recall_fscore_support(label,predictions, average='micro',zero_division=0)
 
 
         # for metric_way in self.check_method:
@@ -366,6 +372,7 @@ def main():
     # Labels
     # 多标签读入数据的时候需要处理一下这里
 
+
     if args.task_name is not None:
         is_regression = args.task_name == "stsb"
         if not is_regression:
@@ -400,9 +407,12 @@ def main():
     #
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-    config = AutoConfig.from_pretrained(args.model_name_or_path, num_labels=num_labels, finetuning_task=args.task_name)
 
+
+    # 定义模型处
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
+    config = AutoConfig.from_pretrained(args.model_name_or_path, num_labels=num_labels,
+                                        finetuning_task=args.task_name)
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name_or_path,
         from_tf=bool(".ckpt" in args.model_name_or_path),
@@ -499,6 +509,11 @@ def main():
 
     train_dataset = processed_datasets["train"]
     eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
+
+
+    if args.child_tune:
+        train_dataset = train_dataset.select(range(3000))
+        eval_dataset = eval_dataset.select(range(500))
     # Log a few random samples from the training set:
     for index in random.sample(range(len(train_dataset)), 3):
         logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
@@ -597,245 +612,275 @@ def main():
         logger.info(f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}")
         logger.info(f"  Gradient Accumulation steps = {args.gradient_accumulation_steps}")
         logger.info(f"  Total optimization steps = {args.max_train_steps}")
-        if args.with_tracking:
-            accelerator.log(
-                {
-                    "eval_res": {'suset_accuracy':0,'accuracy':0,'precision':0,'recall':0,'f1':0},
-                    "train_loss": 0,
-                    "epoch": 0,
-                    "step": 0,
-                },
-                step=0,
-            )
 
-        # Only show the progress bar once on each machine.
-        progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
-        completed_steps = 0
-        starting_epoch = 0
-        # Potentially load in the weights and states from a previous save
-        if args.resume_from_checkpoint:
-            if args.resume_from_checkpoint is not None or args.resume_from_checkpoint != "":
-                accelerator.print(f"Resumed from checkpoint: {args.resume_from_checkpoint}")
-                accelerator.load_state(args.resume_from_checkpoint)
-                path = os.path.basename(args.resume_from_checkpoint)
-            else:
-                # Get the most recent checkpoint
-                dirs = [f.name for f in os.scandir(os.getcwd()) if f.is_dir()]
-                dirs.sort(key=os.path.getctime)
-                path = dirs[-1]  # Sorts folders by date modified, most recent checkpoint is the last
-            # Extract `epoch_{i}` or `step_{i}`
-            training_difference = os.path.splitext(path)[0]
 
-            if "epoch" in training_difference:
-                starting_epoch = int(training_difference.replace("epoch_", "")) + 1
-                resume_step = None
-            else:
-                resume_step = int(training_difference.replace("step_", ""))
-                starting_epoch = resume_step // len(train_dataloader)
-                resume_step -= starting_epoch * len(train_dataloader)
+        def train_cycle(model_config=None):
 
-        for epoch in range(starting_epoch, args.num_train_epochs):
             if args.with_tracking:
-                total_loss = 0
-            for step, batch in enumerate(train_dataloader):
-                # print(batch)
-                model.train()
-                # We need to skip steps until we reach the resumed step
-                if args.resume_from_checkpoint and epoch == starting_epoch:
-                    if resume_step is not None and step < resume_step:
-                        completed_steps += 1
-                        continue
-                outputs = model(**batch)
-
-                loss = outputs.loss
-                # We keep track of the loss at each epoch
-                if args.with_tracking:
-                    total_loss += loss.detach().float()
-
-                loss = loss / args.gradient_accumulation_steps
-                if isinstance(checkpointing_steps, int):
-                    if completed_steps % checkpointing_steps == 0:
-                        logger.info(f"loss: {loss}")
-
-                accelerator.backward(loss)
-                if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
-                    optimizer.step()
-                    lr_scheduler.step()
-                    optimizer.zero_grad()
-                    progress_bar.update(1)
-                    completed_steps += 1
-
-                if isinstance(checkpointing_steps, int):
-                    if completed_steps % checkpointing_steps == 0:
-                        output_dir = f"step_{completed_steps }"
-                        if args.output_dir is not None:
-                            output_dir = os.path.join(args.output_dir, output_dir)
-                        accelerator.save_state(output_dir)
-                        model.eval()
-                        if args.multicheck:
-                            # not supprot accelerator
-                            check_batch_mun = 100
-                            metric.predictions=[]
-                            metric.references=[]
-                            if len(label_list) > 1:
-                                for step, batch in enumerate(tqdm(eval_dataloader)):
-                                    if check_batch_mun<=0:
-                                        break
-                                    with torch.no_grad():
-                                        outputs = model(**batch)
-                                    predictions = torch.sigmoid(outputs.logits.squeeze())
-                                    # predictions = torch.ge(predictions, 0.5).type(torch.int)
-                                    metric.predictions.extend(predictions.cpu().detach().tolist())
-                                    metric.references.extend(batch["labels"].type(torch.int))
-                                    # check_batch_mun-=1
-
-                            else:
-                                for step, batch in enumerate(tqdm(eval_dataloader)):
-                                    if check_batch_mun<=0:
-                                        break
-                                    with torch.no_grad():
-                                        outputs = model(**batch)
-                                    predictions = outputs.logits.argmax(
-                                        dim=-1) if not is_regression else outputs.logits.squeeze()
-                                    metric.predictions.extend(predictions)
-                                    metric.references.extend(batch["labels"])
-                                    # check_batch_mun -= 1
-
-                            if len(label_list) > 1:
-                                best_th = 0.5
-                                default_th = 0.4
-                                best_dir = {}
-                                thresholds = (np.array(range(-11, 10)) / 100) + default_th
-                                best_f1 = 0
-                                metric.predictions = torch.tensor(metric.predictions,
-                                                                  device='cuda' if torch.cuda.is_available() else 'cpu')
-                                for threshold in thresholds:
-                                    metric.eval_metric = {}
-                                    predictions = torch.ge(metric.predictions,threshold).type(torch.int)
-                                    # print(predictions)
-                                    metric.check(predictions)
-                                    if metric.eval_metric['f1']>best_f1:
-                                        best_f1 = metric.eval_metric['f1']
-                                        best_dir = metric.eval_metric
-                                        best_th = threshold
-                                if best_dir:
-                                    metric.eval_metric = best_dir
-                                logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
-                                metric.eval_metric['threshold'] = best_th
-
-                            else:
-                                metric.eval_metric = {}
-                                metric.check()
-                                logger.info(f"checkpoint:{metric.eval_metric}")
-                            if args.with_tracking:
-                                accelerator.log(
-                                    {
-                                        "eval_res": metric.eval_metric,
-
-                                        "train_loss": total_loss.item() / len(train_dataloader),
-                                        "epoch": epoch,
-                                        "step": completed_steps,
-                                    },
-                                    step=completed_steps,
-                                )
-
-                if completed_steps >= args.max_train_steps:
-                    break
-
-            model.eval()
-            if args.multicheck:
-                metric.predictions = []
-                metric.references = []
-                # not supprot accelerator
-                if len(label_list)>1:
-                    for step, batch in enumerate(tqdm(eval_dataloader)):
-                        with torch.no_grad():
-                            outputs = model(**batch)
-                        predictions = torch.sigmoid(outputs.logits.squeeze())
-                        # predictions = torch.ge(predictions, 0.5).type(torch.int)
-                        metric.predictions.extend(predictions.cpu().detach().tolist())
-                        metric.references.extend(batch["labels"].type(torch.int))
-                        # check_batch_mun-=1
+                accelerator.log(
+                    {
+                        "eval_res": {'suset_accuracy': 0, 'accuracy': 0, 'precision': 0, 'recall': 0, 'f1': 0},
+                        "train_loss": 0,
+                        "epoch": 0,
+                        "step": 0,
+                    },
+                    step=0,
+                )
+            model.config.loss_mess=model_config
+            # Only show the progress bar once on each machine.
+            progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
+            completed_steps = 0
+            starting_epoch = 0
+            # Potentially load in the weights and states from a previous save
+            if args.resume_from_checkpoint:
+                if args.resume_from_checkpoint is not None or args.resume_from_checkpoint != "":
+                    accelerator.print(f"Resumed from checkpoint: {args.resume_from_checkpoint}")
+                    accelerator.load_state(args.resume_from_checkpoint)
+                    path = os.path.basename(args.resume_from_checkpoint)
                 else:
+                    # Get the most recent checkpoint
+                    dirs = [f.name for f in os.scandir(os.getcwd()) if f.is_dir()]
+                    dirs.sort(key=os.path.getctime)
+                    path = dirs[-1]  # Sorts folders by date modified, most recent checkpoint is the last
+                # Extract `epoch_{i}` or `step_{i}`
+                training_difference = os.path.splitext(path)[0]
+
+                if "epoch" in training_difference:
+                    starting_epoch = int(training_difference.replace("epoch_", "")) + 1
+                    resume_step = None
+                else:
+                    resume_step = int(training_difference.replace("step_", ""))
+                    starting_epoch = resume_step // len(train_dataloader)
+                    resume_step -= starting_epoch * len(train_dataloader)
+
+            # 训练循环
+            for epoch in range(starting_epoch, args.num_train_epochs):
+                if args.with_tracking:
+                    total_loss = 0
+                for step, batch in enumerate(train_dataloader):
+                    # print(batch)
+                    model.train()
+                    # We need to skip steps until we reach the resumed step
+                    if args.resume_from_checkpoint and epoch == starting_epoch:
+                        if resume_step is not None and step < resume_step:
+                            completed_steps += 1
+                            continue
+                    outputs = model(**batch)
+
+                    loss = outputs.loss
+                    # We keep track of the loss at each epoch
+                    if args.with_tracking:
+                        total_loss += loss.detach().float()
+
+                    loss = loss / args.gradient_accumulation_steps
+                    if isinstance(checkpointing_steps, int):
+                        if completed_steps % checkpointing_steps == 0:
+                            logger.info(f"loss: {loss}")
+
+                    accelerator.backward(loss)
+                    if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+                        optimizer.step()
+                        lr_scheduler.step()
+                        optimizer.zero_grad()
+                        progress_bar.update(1)
+                        completed_steps += 1
+
+                    if isinstance(checkpointing_steps, int):
+                        if completed_steps % checkpointing_steps == 0:
+                            output_dir = f"step_{completed_steps }"
+                            if args.output_dir is not None:
+                                output_dir = os.path.join(args.output_dir, output_dir)
+                            accelerator.save_state(output_dir)
+                            model.eval()
+                            if args.multicheck:
+                                # not supprot accelerator
+                                check_batch_mun = 100
+                                metric.predictions=[]
+                                metric.references=[]
+                                if len(label_list) > 1:
+                                    for step, batch in enumerate(tqdm(eval_dataloader)):
+                                        if check_batch_mun<=0:
+                                            break
+                                        with torch.no_grad():
+                                            outputs = model(**batch)
+                                        predictions = torch.sigmoid(outputs.logits.squeeze())
+                                        # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                                        metric.predictions.extend(predictions.cpu().detach().tolist())
+                                        metric.references.extend(batch["labels"].type(torch.int))
+                                        # check_batch_mun-=1
+
+                                else:
+                                    for step, batch in enumerate(tqdm(eval_dataloader)):
+                                        if check_batch_mun<=0:
+                                            break
+                                        with torch.no_grad():
+                                            outputs = model(**batch)
+                                        predictions = outputs.logits.argmax(
+                                            dim=-1) if not is_regression else outputs.logits.squeeze()
+                                        metric.predictions.extend(predictions)
+                                        metric.references.extend(batch["labels"])
+                                        # check_batch_mun -= 1
+
+                                if len(label_list) > 1:
+                                    best_th = 0.5
+                                    default_th = 0.4
+                                    best_dir = {}
+                                    thresholds = (np.array(range(-11, 10)) / 100) + default_th
+                                    best_f1 = 0
+                                    metric.predictions = torch.tensor(metric.predictions,
+                                                                      device='cuda' if torch.cuda.is_available() else 'cpu')
+                                    for threshold in thresholds:
+                                        metric.eval_metric = {}
+                                        predictions = torch.ge(metric.predictions,threshold).type(torch.int)
+                                        # print(predictions)
+                                        metric.check(predictions)
+                                        if metric.eval_metric['f1']>best_f1:
+                                            best_f1 = metric.eval_metric['f1']
+                                            best_dir = metric.eval_metric
+                                            best_th = threshold
+                                    if best_dir:
+                                        metric.eval_metric = best_dir
+                                    logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
+                                    metric.eval_metric['threshold'] = best_th
+
+                                else:
+                                    metric.eval_metric = {}
+                                    metric.check()
+                                    logger.info(f"checkpoint:{metric.eval_metric}")
+                                if args.with_tracking:
+                                    accelerator.log(
+                                        {
+                                            "eval_res": metric.eval_metric,
+
+                                            "train_loss": total_loss.item() / len(train_dataloader),
+                                            "epoch": epoch,
+                                            "step": completed_steps,
+                                        },
+                                        step=completed_steps,
+                                    )
+                        if args.child_tune:
+                            tune.report(mmicro_f1=metric.eval_metric['f1'])
+
+                    if completed_steps >= args.max_train_steps:
+                        break
+
+                model.eval()
+                if args.multicheck:
+                    metric.predictions = []
+                    metric.references = []
+                    # not supprot accelerator
+                    if len(label_list)>1:
+                        for step, batch in enumerate(tqdm(eval_dataloader)):
+                            with torch.no_grad():
+                                outputs = model(**batch)
+                            predictions = torch.sigmoid(outputs.logits.squeeze())
+                            # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                            metric.predictions.extend(predictions.cpu().detach().tolist())
+                            metric.references.extend(batch["labels"].type(torch.int))
+                            # check_batch_mun-=1
+                    else:
+                        for step, batch in enumerate(tqdm(eval_dataloader)):
+                            with torch.no_grad():
+                                outputs = model(**batch)
+                            predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
+                            metric.predictions.extend(predictions)
+                            metric.references.extend(batch["labels"])
+
+
+                    if len(label_list) > 1:
+                        default_th = 0.5
+                        best_th = 0.5
+                        best_dir = {}
+                        thresholds = (np.array(range(-10, 11)) / 100) + default_th
+                        best_f1 = 0
+                        metric.predictions = torch.tensor(metric.predictions,
+                                                          device='cuda' if torch.cuda.is_available() else 'cpu')
+                        for threshold in thresholds:
+                            metric.eval_metric = {}
+                            predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+                            metric.check(predictions)
+                            if metric.eval_metric['f1'] > best_f1:
+                                best_f1 = metric.eval_metric['f1']
+                                best_dir = metric.eval_metric
+                                best_th = threshold
+                        if best_dir:
+                            metric.eval_metric = best_dir
+                        logger.info(f"epoch {epoch}: {metric.eval_metric};best_th:{best_th}")
+                        metric.eval_metric['threshold'] = best_th
+                    else:
+                        metric.eval_metric = {}
+                        metric.check()
+                        logger.info(f"epoch {epoch}: {metric.eval_metric}")
+
+                    if args.with_tracking:
+                        accelerator.log(
+                            {
+                                "eval_res": metric.eval_metric,
+                                "train_loss": total_loss.item() / len(train_dataloader),
+                                "epoch": epoch,
+                                "step": completed_steps,
+                            },
+                            step=completed_steps,
+                        )
+                else:
+                    samples_seen = 0
                     for step, batch in enumerate(tqdm(eval_dataloader)):
                         with torch.no_grad():
                             outputs = model(**batch)
                         predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
-                        metric.predictions.extend(predictions)
-                        metric.references.extend(batch["labels"])
+                        predictions, references = accelerator.gather((predictions, batch["labels"]))
+                        # If we are in a multiprocess environment, the last batch has duplicates
+                        if accelerator.num_processes > 1:
+                            if step == len(eval_dataloader) - 1:
+                                predictions = predictions[: len(eval_dataloader.dataset) - samples_seen]
+                                references = references[: len(eval_dataloader.dataset) - samples_seen]
+                            else:
+                                samples_seen += references.shape[0]
 
+                        metric.add_batch(
+                            predictions=predictions,
+                            references=references,
+                        )
 
-                if len(label_list) > 1:
-                    default_th = 0.5
-                    best_th = 0.5
-                    best_dir = {}
-                    thresholds = (np.array(range(-10, 11)) / 100) + default_th
-                    best_f1 = 0
-                    metric.predictions = torch.tensor(metric.predictions,
-                                                      device='cuda' if torch.cuda.is_available() else 'cpu')
-                    for threshold in thresholds:
-                        metric.eval_metric = {}
-                        predictions = torch.ge(metric.predictions, threshold).type(torch.int)
-                        metric.check(predictions)
-                        if metric.eval_metric['f1'] > best_f1:
-                            best_f1 = metric.eval_metric['f1']
-                            best_dir = metric.eval_metric
-                            best_th = threshold
-                    if best_dir:
-                        metric.eval_metric = best_dir
-                    logger.info(f"epoch {epoch}: {metric.eval_metric};best_th:{best_th}")
-                    metric.eval_metric['threshold'] = best_th
-                else:
-                    metric.eval_metric = {}
-                    metric.check()
-                    logger.info(f"epoch {epoch}: {metric.eval_metric}")
+                    eval_metric = metric.compute()
 
-                if args.with_tracking:
-                    accelerator.log(
-                        {
-                            "eval_res": metric.eval_metric,
-                            "train_loss": total_loss.item() / len(train_dataloader),
-                            "epoch": epoch,
-                            "step": completed_steps,
-                        },
-                        step=completed_steps,
+                    logger.info(f"epoch {epoch}: {eval_metric}")
+
+                    if args.with_tracking:
+                        accelerator.log(
+                            {
+                                "accuracy" if args.task_name is not None else "glue": eval_metric,
+                                "train_loss": total_loss.item() / len(train_dataloader),
+                                "epoch": epoch,
+                                "step": completed_steps,
+                            },
+                            step=completed_steps,
+                        )
+
+                if args.push_to_hub and epoch < args.num_train_epochs - 1:
+                    accelerator.wait_for_everyone()
+                    unwrapped_model = accelerator.unwrap_model(model)
+                    unwrapped_model.save_pretrained(
+                        args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
                     )
-            else:
-                samples_seen = 0
-                for step, batch in enumerate(tqdm(eval_dataloader)):
-                    with torch.no_grad():
-                        outputs = model(**batch)
-                    predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
-                    predictions, references = accelerator.gather((predictions, batch["labels"]))
-                    # If we are in a multiprocess environment, the last batch has duplicates
-                    if accelerator.num_processes > 1:
-                        if step == len(eval_dataloader) - 1:
-                            predictions = predictions[: len(eval_dataloader.dataset) - samples_seen]
-                            references = references[: len(eval_dataloader.dataset) - samples_seen]
-                        else:
-                            samples_seen += references.shape[0]
+                    if accelerator.is_main_process:
+                        tokenizer.save_pretrained(args.output_dir)
+                        repo.push_to_hub(
+                            commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
+                        )
 
-                    metric.add_batch(
-                        predictions=predictions,
-                        references=references,
-                    )
+                if args.checkpointing_steps == "epoch":
+                    output_dir = f"epoch_{epoch}"
+                    if args.output_dir is not None:
+                        output_dir = os.path.join(args.output_dir, output_dir)
+                    accelerator.save_state(output_dir)
 
-                eval_metric = metric.compute()
 
-                logger.info(f"epoch {epoch}: {eval_metric}")
 
-                if args.with_tracking:
-                    accelerator.log(
-                        {
-                            "accuracy" if args.task_name is not None else "glue": eval_metric,
-                            "train_loss": total_loss.item() / len(train_dataloader),
-                            "epoch": epoch,
-                            "step": completed_steps,
-                        },
-                        step=completed_steps,
-                    )
+            if args.with_tracking:
+                accelerator.end_training()
 
-            if args.push_to_hub and epoch < args.num_train_epochs - 1:
+            if args.output_dir is not None:
                 accelerator.wait_for_everyone()
                 unwrapped_model = accelerator.unwrap_model(model)
                 unwrapped_model.save_pretrained(
@@ -843,30 +888,139 @@ def main():
                 )
                 if accelerator.is_main_process:
                     tokenizer.save_pretrained(args.output_dir)
-                    repo.push_to_hub(
-                        commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
-                    )
+                    if args.push_to_hub:
+                        repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
-            if args.checkpointing_steps == "epoch":
-                output_dir = f"epoch_{epoch}"
-                if args.output_dir is not None:
-                    output_dir = os.path.join(args.output_dir, output_dir)
-                accelerator.save_state(output_dir)
+        def easy_train_cycle(model_config=None):
+            metric = muticheck(['accuracy', 'precision', 'f1'])
+            model.config.loss_mess=model_config
+            # Only show the progress bar once on each machine.
+            progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
+            completed_steps = 0
+            starting_epoch = 0
+            # Potentially load in the weights and states from a previous save
 
-        if args.with_tracking:
-            accelerator.end_training()
+            # 训练循环
+            for epoch in range(starting_epoch, args.num_train_epochs):
+                if args.with_tracking:
+                    total_loss = 0
+                for step, batch in enumerate(train_dataloader):
+                    model.train()
+                    outputs = model(**batch)
 
-        if args.output_dir is not None:
-            accelerator.wait_for_everyone()
-            unwrapped_model = accelerator.unwrap_model(model)
-            unwrapped_model.save_pretrained(
-                args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save
-            )
-            if accelerator.is_main_process:
-                tokenizer.save_pretrained(args.output_dir)
-                if args.push_to_hub:
-                    repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
+                    loss = outputs.loss
+                    # We keep track of the loss at each epoch
+                    loss = loss / args.gradient_accumulation_steps
 
+                    accelerator.backward(loss)
+                    if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+                        optimizer.step()
+                        lr_scheduler.step()
+                        optimizer.zero_grad()
+                        progress_bar.update(1)
+                        completed_steps += 1
+
+                model.eval()
+                if args.multicheck:
+                    metric.predictions = []
+                    metric.references = []
+                    # not supprot accelerator
+                    if len(label_list)>1:
+                        for step, batch in enumerate(tqdm(eval_dataloader)):
+                            with torch.no_grad():
+                                outputs = model(**batch)
+                            predictions = torch.sigmoid(outputs.logits.squeeze())
+                            # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                            metric.predictions.extend(predictions.cpu().detach().tolist())
+                            metric.references.extend(batch["labels"].type(torch.int))
+                            # check_batch_mun-=1
+                    else:
+                        for step, batch in enumerate(tqdm(eval_dataloader)):
+                            with torch.no_grad():
+                                outputs = model(**batch)
+                            predictions = outputs.logits.argmax(dim=-1) if not is_regression else outputs.logits.squeeze()
+                            metric.predictions.extend(predictions)
+                            metric.references.extend(batch["labels"])
+
+                    if len(label_list) > 1:
+                        default_th = 0.5
+                        best_th = 0.5
+                        best_dir = {}
+                        thresholds = (np.array(range(-10, 11)) / 100) + default_th
+                        best_f1 = 0
+                        metric.predictions = torch.tensor(metric.predictions,
+                                                          device='cuda' if torch.cuda.is_available() else 'cpu')
+                        for threshold in thresholds:
+                            metric.eval_metric = {}
+                            predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+                            metric.check(predictions)
+                            if metric.eval_metric['f1'] > best_f1:
+                                best_f1 = metric.eval_metric['f1']
+                                best_dir = metric.eval_metric
+                                best_th = threshold
+                        if best_dir:
+                            metric.eval_metric = best_dir
+                        logger.info(f"epoch {epoch}: {metric.eval_metric};best_th:{best_th}")
+                        metric.eval_metric['threshold'] = best_th
+                    else:
+                        metric.eval_metric = {}
+                        metric.check()
+                        logger.info(f"epoch {epoch}: {metric.eval_metric}")
+
+                else:
+                    return ValueError('we need multicheck')
+
+
+
+        if args.child_tune:
+            x = {
+                    'reweight_func':tune.choice(['CB','rebalance',None]),
+                    'focal':True,
+                    'alpha':tune.grid_search([i/10 for i in range(3,16,3)]),
+                    'CB_loss':True,
+                    'CB_loss_alpha':tune.grid_search([i/10 for i in range(6,16,3)]),
+                    'map_param':True,
+                    'map_alpha':tune.grid_search([i/100 for i in range(6,16,3)]),
+                    'map_beta':tune.grid_search([i*10. for i in range(3,13,3)]),
+                    'map_gamma':0.05
+                }
+            model_config={
+                'loss1':x,
+                'loss2':x
+            }
+
+            analysis = tune.run(
+                easy_train_cycle,
+                mode='max',
+                config=model_config, local_dir='./')
+            res_para = analysis.get_best_config(metric="f1", mode='max')
+            print("Best config: ", res_para)
+            with open(os.path.join(args.output_dir,'best_para.txt'),'w',encoding='utf-8') as f:
+                f.write(res_para)
+
+            # def objective(step, alpha, beta):
+            #     return (0.1 + alpha * step / 100) ** (-1) + beta * 0.1
+            #
+            # def training_function(config):
+            #     # Hyperparameters
+            #     alpha, beta = config["alpha"], config["beta"]
+            #     for step in range(10):
+            #         # Iterative training function - can be any arbitrary training procedure.
+            #         intermediate_score = objective(step, alpha, beta)
+            #         # Feed the score back back to Tune.
+            #         tune.report(mean_loss=intermediate_score)
+            #
+            # analysis = tune.run(
+            #     training_function,
+            #     config={
+            #         "alpha": tune.grid_search([0.001, 0.01, 0.1]),
+            #         "beta": tune.choice([1, 2, 3])
+            #     })
+            #
+            # print("Best config: ", analysis.get_best_config(metric="mean_loss"))
+
+        else:
+            train_cycle()
 
     # 开始评估
     print('-----------------------------------------------------------------------------')
@@ -913,8 +1067,8 @@ def main():
                 metric.eval_metric = {}
                 predictions = torch.ge(metric.predictions, threshold).type(torch.int)
                 metric.check(predictions)
-                if metric.eval_metric['f1'] > best_f1:
-                    best_f1 = metric.eval_metric['f1']
+                if metric.eval_metric['micro-f1'] > best_f1:
+                    best_f1 = metric.eval_metric['micro-f1']
                     best_dir = metric.eval_metric
                     best_th = threshold
             if best_dir:

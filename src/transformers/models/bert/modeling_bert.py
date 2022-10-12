@@ -1497,56 +1497,80 @@ class BertForNextSentencePrediction(BertPreTrainedModel):
             attentions=outputs.attentions,
         )
 
-def loss_choice(loss_func_name,class_freq,train_num):
-    if loss_func_name == 'FL':
-        loss_fct = util_loss.ResampleLoss(reweight_func=None, loss_weight=1.0,
-                                          focal=dict(focal=True, alpha=0.5, gamma=2),
-                                          logit_reg=dict(),
-                                          class_freq=class_freq, train_num=train_num)
+def loss_choice(loss_func_name,class_freq,train_num,model_config):
 
-    elif loss_func_name == 'CBloss':
-        loss_fct = util_loss.ResampleLoss(reweight_func='CB', loss_weight=5.0,
-                                          focal=dict(focal=True, alpha=0.5, gamma=2),
-                                          logit_reg=dict(),
-                                          CB_loss=dict(CB_beta=0.9, CB_mode='by_class'),
-                                          class_freq=class_freq, train_num=train_num)
+    gamma = 2
+    if model_config:
+        focal={}
+        logit_reg={}
+        map_param={}
+        CB_loss={}
+        if model_config['focal']:
+            focal = dict(focal=True, alpha=model_config['alpha'], gamma=gamma)
+        if model_config['logit_reg']:
+            logit_reg = dict(init_bias=model_config['init_bias'], neg_scale=model_config['neg_scale'])
+        if model_config['map_param']:
+            map_param = dict(alpha=model_config['map_alpha'], beta=model_config['map_beta'], gamma=model_config['map_gamma'])
+        if model_config['CB_loss']:
+            CB_loss = dict(alpha=model_config['CB_loss_alpha'], CB_mode='by_class')
 
-    elif loss_func_name == 'R-BCE-Focal':  # R-FL
-        loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=1.0,
-                                          focal=dict(focal=True, alpha=0.5, gamma=2),
-                                          logit_reg=dict(),
-                                          map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
-                                          class_freq=class_freq, train_num=train_num)
-
-    elif loss_func_name == 'NTR-Focal':  # NTR-FL
-        loss_fct = util_loss.ResampleLoss(reweight_func=None, loss_weight=0.5,
-                                          focal=dict(focal=True, alpha=0.5, gamma=2),
-                                          logit_reg=dict(init_bias=0.05, neg_scale=2.0),
-                                          class_freq=class_freq, train_num=train_num)
-
-    elif loss_func_name == 'DBloss-noFocal':  # DB-0FL
-        loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=0.5,
-                                          focal=dict(focal=False, alpha=0.5, gamma=2),
-                                          logit_reg=dict(init_bias=0.05, neg_scale=2.0),
-                                          map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
-                                          class_freq=class_freq, train_num=train_num)
-
-    elif loss_func_name == 'CBloss-ntr':  # CB-NTR
-        loss_fct = util_loss.ResampleLoss(reweight_func='CB', loss_weight=10.0,
-                                          focal=dict(focal=True, alpha=0.5, gamma=2),
-                                          logit_reg=dict(init_bias=0.05, neg_scale=2.0),
-                                          CB_loss=dict(CB_beta=0.9, CB_mode='by_class'),
-                                          class_freq=class_freq, train_num=train_num)
-
-    elif loss_func_name == 'DBloss':  # DB
-        loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=1.0,
-                                          focal=dict(focal=True, alpha=0.5, gamma=2),
-                                          logit_reg=dict(init_bias=0.05, neg_scale=2.0),
-                                          map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
-                                          class_freq=class_freq, train_num=train_num)
-
+        loss_fct = util_loss.ResampleLoss(reweight_func=model_config['reweight_func'], loss_weight=model_config['loss_weight'],
+                                              focal=focal,
+                                              logit_reg=logit_reg,
+                                              map_param=map_param,
+                                              CB_loss=CB_loss,
+                                              class_freq=class_freq, train_num=train_num
+                                          )
     else:
-        loss_fct = BCEWithLogitsLoss()
+        if loss_func_name == 'FL':
+            loss_fct = util_loss.ResampleLoss(reweight_func=None, loss_weight=1.0,
+                                              focal=dict(focal=True, alpha=1.0, gamma=gamma),
+                                              logit_reg=dict(),
+                                              class_freq=class_freq, train_num=train_num)
+
+        elif loss_func_name == 'CBloss':
+            loss_fct = util_loss.ResampleLoss(reweight_func='CB', loss_weight=5.0,
+                                              focal=dict(focal=True, alpha=0.5, gamma=gamma),
+                                              logit_reg=dict(),
+                                              CB_loss=dict(CB_beta=0.9, CB_mode='by_class'),
+                                              class_freq=class_freq, train_num=train_num)
+
+        elif loss_func_name == 'R-BCE-Focal':  # R-FL
+            loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=1.0,
+                                              focal=dict(focal=True, alpha=0.5, gamma=gamma),
+                                              logit_reg=dict(),
+                                              map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
+                                              class_freq=class_freq, train_num=train_num)
+
+        elif loss_func_name == 'NTR-Focal':  # NTR-FL
+            loss_fct = util_loss.ResampleLoss(reweight_func=None, loss_weight=0.5,
+                                              focal=dict(focal=True, alpha=0.5, gamma=gamma),
+                                              logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                              class_freq=class_freq, train_num=train_num)
+
+        elif loss_func_name == 'DBloss-noFocal':  # DB-0FL
+            loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=0.5,
+                                              focal=dict(focal=False, alpha=0.5, gamma=gamma),
+                                              logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                              map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
+                                              class_freq=class_freq, train_num=train_num)
+
+        elif loss_func_name == 'CBloss-ntr':  # CB-NTR
+            loss_fct = util_loss.ResampleLoss(reweight_func='CB', loss_weight=10.0,
+                                              focal=dict(focal=True, alpha=0.5, gamma=gamma),
+                                              logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                              CB_loss=dict(CB_beta=0.9, CB_mode='by_class'),
+                                              class_freq=class_freq, train_num=train_num)
+
+        elif loss_func_name == 'DBloss':  # DB
+            loss_fct = util_loss.ResampleLoss(reweight_func='rebalance', loss_weight=1.0,
+                                              focal=dict(focal=True, alpha=0.5, gamma=gamma),
+                                              logit_reg=dict(init_bias=0.05, neg_scale=2.0),
+                                              map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
+                                              class_freq=class_freq, train_num=train_num)
+
+        else:
+            loss_fct = BCEWithLogitsLoss()
     return loss_fct
 
 
@@ -1647,7 +1671,10 @@ class BertForSequenceClassification1(BertPreTrainedModel):
                 loss_func_name = 'BCE'
                 class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
                 train_num = 90000
-                loss_fct = loss_choice(loss_func_name,class_freq,train_num)
+                try:
+                    loss_fct = loss_choice(loss_func_name,class_freq,train_num,self.config.loss_mess)
+                except:
+                    loss_fct = loss_choice(loss_func_name, class_freq, train_num, {})
                 loss = loss_fct(logits, labels)
 
 
@@ -1778,8 +1805,10 @@ class BertForSequenceClassification(BertPreTrainedModel):
                 loss_func_name_2 = 'DBloss'
                 class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
                 train_num = 90000
-                loss_fct_1 = loss_choice(loss_func_name_1, class_freq, train_num)
-                loss_fct_2 = loss_choice(loss_func_name_2, class_freq, train_num)
+
+
+                loss_fct_1 = loss_choice(loss_func_name_1, class_freq, train_num,self.config.loss_mess['loss1'])
+                loss_fct_2 = loss_choice(loss_func_name_2, class_freq, train_num,self.config.loss_mess['loss2'])
 
                 if loss:
                     loss += alpha_ * loss_fct_1(logits, labels)
