@@ -24,7 +24,6 @@ from pathlib import Path
 import datasets
 import torch
 from datasets import load_dataset
-from ray import tune
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
@@ -48,6 +47,13 @@ from transformers.utils import check_min_version, get_full_repo_name, send_examp
 from transformers.utils.versions import require_version
 import numpy as np
 from sklearn.metrics import accuracy_score,recall_score,f1_score,precision_score,precision_recall_fscore_support
+
+
+from ray import tune, air
+from ray.air import session
+from ray.tune.search.optuna import OptunaSearch
+
+
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.23.0.dev0")
@@ -207,6 +213,12 @@ def parse_args():
         "--child_tune",
         action="store_true",
         help="to child tune the model.",
+    )
+    parser.add_argument(
+        "--train_mode",
+        type=str,
+        default='default',
+        help="the train mode.",
     )
 
 
@@ -413,6 +425,7 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
     config = AutoConfig.from_pretrained(args.model_name_or_path, num_labels=num_labels,
                                         finetuning_task=args.task_name)
+
     model = AutoModelForSequenceClassification.from_pretrained(
         args.model_name_or_path,
         from_tf=bool(".ckpt" in args.model_name_or_path),
@@ -615,7 +628,13 @@ def main():
 
 
         def train_cycle(model_config=None):
-
+            if not model_config:
+                model.config.loss_mess = {
+                    'loss1':{},
+                    'loss2':{}
+                }
+            else:
+                model.config.loss_mess = model_config
             if args.with_tracking:
                 accelerator.log(
                     {
@@ -626,7 +645,7 @@ def main():
                     },
                     step=0,
                 )
-            model.config.loss_mess=model_config
+
             # Only show the progress bar once on each machine.
             progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
             completed_steps = 0
@@ -891,6 +910,104 @@ def main():
                     if args.push_to_hub:
                         repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
+        def simcse_train_cycle():
+            model.config.pooling='last-avg'
+            model.config.loss_mess = {
+                'loss1': {},
+                'loss2': {}
+            }
+            model.config.train_mode = 'simcse'
+
+            if args.with_tracking:
+                accelerator.log(
+                    {
+                        "eval_res": {'suset_accuracy': 0, 'accuracy': 0, 'precision': 0, 'recall': 0, 'f1': 0},
+                        "train_loss": 0,
+                        "epoch": 0,
+                        "step": 0,
+                    },
+                    step=0,
+                )
+
+            # Only show the progress bar once on each machine.
+            progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
+            completed_steps = 0
+            starting_epoch = 0
+            # Potentially load in the weights and states from a previous save
+            if args.resume_from_checkpoint:
+                if args.resume_from_checkpoint is not None or args.resume_from_checkpoint != "":
+                    accelerator.print(f"Resumed from checkpoint: {args.resume_from_checkpoint}")
+                    accelerator.load_state(args.resume_from_checkpoint)
+                    path = os.path.basename(args.resume_from_checkpoint)
+                else:
+                    # Get the most recent checkpoint
+                    dirs = [f.name for f in os.scandir(os.getcwd()) if f.is_dir()]
+                    dirs.sort(key=os.path.getctime)
+                    path = dirs[-1]  # Sorts folders by date modified, most recent checkpoint is the last
+                # Extract `epoch_{i}` or `step_{i}`
+                training_difference = os.path.splitext(path)[0]
+
+                if "epoch" in training_difference:
+                    starting_epoch = int(training_difference.replace("epoch_", "")) + 1
+                    resume_step = None
+                else:
+                    resume_step = int(training_difference.replace("step_", ""))
+                    starting_epoch = resume_step // len(train_dataloader)
+                    resume_step -= starting_epoch * len(train_dataloader)
+
+            # 训练循环
+            for epoch in range(starting_epoch, args.num_train_epochs):
+                if args.with_tracking:
+                    total_loss = 0
+                for step, batch in enumerate(train_dataloader):
+                    # print(batch)
+                    model.train()
+                    # We need to skip steps until we reach the resumed step
+                    if args.resume_from_checkpoint and epoch == starting_epoch:
+                        if resume_step is not None and step < resume_step:
+                            completed_steps += 1
+                            continue
+                    outputs = model(**batch)
+
+                    loss = outputs.loss
+                    # We keep track of the loss at each epoch
+                    if args.with_tracking:
+                        total_loss += loss.detach().float()
+
+                    loss = loss / args.gradient_accumulation_steps
+                    if isinstance(checkpointing_steps, int):
+                        if completed_steps % checkpointing_steps == 0:
+                            logger.info(f"loss: {loss}")
+
+                    accelerator.backward(loss)
+
+                    if step % args.gradient_accumulation_steps == 0 or step == len(train_dataloader) - 1:
+                        optimizer.step()
+                        lr_scheduler.step()
+                        optimizer.zero_grad()
+                        progress_bar.update(1)
+                        completed_steps += 1
+
+                    if isinstance(checkpointing_steps, int):
+                        if completed_steps % checkpointing_steps == 0:
+                            output_dir = f"step_{completed_steps}"
+                            if args.output_dir is not None:
+                                output_dir = os.path.join(args.output_dir, output_dir)
+                            accelerator.save_state(output_dir)
+                            if args.with_tracking:
+                                accelerator.log(
+                                    {
+                                        "train_loss": total_loss,
+                                        "epoch": epoch,
+                                        "step": step,
+                                    }
+                                )
+
+                    if completed_steps >= args.max_train_steps:
+                        break
+
+
+
         def easy_train_cycle(model_config=None):
             metric = muticheck(['accuracy', 'precision', 'f1'])
             model.config.loss_mess=model_config
@@ -971,7 +1088,6 @@ def main():
                     return ValueError('we need multicheck')
 
 
-
         if args.child_tune:
             x = {
                     'reweight_func':tune.choice(['CB','rebalance',None]),
@@ -998,27 +1114,9 @@ def main():
             with open(os.path.join(args.output_dir,'best_para.txt'),'w',encoding='utf-8') as f:
                 f.write(res_para)
 
-            # def objective(step, alpha, beta):
-            #     return (0.1 + alpha * step / 100) ** (-1) + beta * 0.1
-            #
-            # def training_function(config):
-            #     # Hyperparameters
-            #     alpha, beta = config["alpha"], config["beta"]
-            #     for step in range(10):
-            #         # Iterative training function - can be any arbitrary training procedure.
-            #         intermediate_score = objective(step, alpha, beta)
-            #         # Feed the score back back to Tune.
-            #         tune.report(mean_loss=intermediate_score)
-            #
-            # analysis = tune.run(
-            #     training_function,
-            #     config={
-            #         "alpha": tune.grid_search([0.001, 0.01, 0.1]),
-            #         "beta": tune.choice([1, 2, 3])
-            #     })
-            #
-            # print("Best config: ", analysis.get_best_config(metric="mean_loss"))
-
+        elif args.train_mode=='simcse':
+            simcse_train_cycle()
+            return
         else:
             train_cycle()
 

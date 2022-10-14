@@ -1584,7 +1584,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1642,53 +1642,66 @@ class BertForSequenceClassification1(BertPreTrainedModel):
             return_dict=return_dict,
         )
 
-        pooled_output = outputs[1]
+        if self.config.pooling == 'cls':
+            pooled_output= outputs.last_hidden_state[:, 0]  # [batch, 768]
 
-        pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)
+        elif self.config.pooling == 'pooler':
+            pooled_output= outputs.pooler_output  # [batch, 768]
 
-        loss = None
-        if labels is not None:
-            if self.config.problem_type is None:
-                if self.num_labels == 1:
-                    self.config.problem_type = "regression"
-                elif self.num_labels > 1 and (labels.dtype == torch.long or labels.dtype == torch.int):
-                    self.config.problem_type = "single_label_classification"
-                else:
-                    self.config.problem_type = "multi_label_classification"
+        elif self.config.pooling == 'last-avg':
+            last = outputs.last_hidden_state.transpose(1, 2)  # [batch, 768, seqlen]
+            pooled_output= torch.avg_pool1d(last, kernel_size=last.shape[-1]).squeeze(-1)  # [batch, 768]
 
-            # print(self.config.problem_type)
-            if self.config.problem_type == "regression":
-                loss_fct = MSELoss()
-                if self.num_labels == 1:
-                    loss = loss_fct(logits.squeeze(), labels.squeeze())
-                else:
-                    loss = loss_fct(logits, labels)
-            elif self.config.problem_type == "single_label_classification":
-                loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
-            elif self.config.problem_type == "multi_label_classification":
-                loss_func_name = 'FL'
-                class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
-                train_num = 90000
-                try:
-                    loss_fct = loss_choice(loss_func_name,class_freq,train_num,self.config.loss_mess)
-                except:
-                    loss_fct = loss_choice(loss_func_name, class_freq, train_num, {})
-                loss = loss_fct(logits, labels)
+        elif self.config.pooling == 'first-last-avg':
+            first = outputs.hidden_states[1].transpose(1, 2)  # [batch, 768, seqlen]
+            last = outputs.hidden_states[-1].transpose(1, 2)  # [batch, 768, seqlen]
+            first_avg = torch.avg_pool1d(first, kernel_size=last.shape[-1]).squeeze(-1)  # [batch, 768]
+            last_avg = torch.avg_pool1d(last, kernel_size=last.shape[-1]).squeeze(-1)  # [batch, 768]
+            avg = torch.cat((first_avg.unsqueeze(1), last_avg.unsqueeze(1)), dim=1)  # [batch, 2, 768]
+            pooled_output= torch.avg_pool1d(avg.transpose(1, 2), kernel_size=2).squeeze(-1)  # [batch, 768]
 
 
-        if not return_dict:
-            output = (logits,) + outputs[2:]
-            return ((loss,) + output) if loss is not None else output
+        # pooled_output = outputs[1]
+        #
+        # pooled_output = self.dropout(pooled_output)
+        # logits = self.classifier(pooled_output)
+        # loss = None
+        # if labels is not None:
+        #     if self.config.problem_type is None:
+        #         if self.num_labels == 1:
+        #             self.config.problem_type = "regression"
+        #         elif self.num_labels > 1 and (labels.dtype == torch.long or labels.dtype == torch.int):
+        #             self.config.problem_type = "single_label_classification"
+        #         else:
+        #             self.config.problem_type = "multi_label_classification"
+        #
+        #     # print(self.config.problem_type)
+        #     if self.config.problem_type == "regression":
+        #         loss_fct = MSELoss()
+        #         if self.num_labels == 1:
+        #             loss = loss_fct(logits.squeeze(), labels.squeeze())
+        #         else:
+        #             loss = loss_fct(logits, labels)
+        #     elif self.config.problem_type == "single_label_classification":
+        #         loss_fct = CrossEntropyLoss()
+        #         loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+        #     elif self.config.problem_type == "multi_label_classification":
+        #         loss_func_name = 'BCE'
+        #         class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
+        #         train_num = 90000
+        #
+        #         try:
+        #             loss_fct = loss_choice(loss_func_name,class_freq,train_num,self.config.loss_mess)
+        #         except:
+        #             loss_fct = loss_choice(loss_func_name, class_freq, train_num, {})
+        #
+        #         loss = loss_fct(logits, labels)
 
+        loss = util_loss.simcse_unsup_loss(pooled_output)
 
 
         return SequenceClassifierOutput(
             loss=loss,
-            logits=logits,
-            hidden_states=outputs.hidden_states,
-            attentions=outputs.attentions,
         )
 
 
@@ -1699,7 +1712,7 @@ class BertForSequenceClassification1(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1801,14 +1814,12 @@ class BertForSequenceClassification(BertPreTrainedModel):
                     loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
 
             elif self.config.problem_type == "multi_label_classification":
-                loss_func_name_1 = 'CBloss-ntr'
-                loss_func_name_2 = 'DBloss'
+                loss_func_name_1 = 'BCE'
+                loss_func_name_2 = 'BCE'
                 class_freq=[2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841, 1137, 30216, 2760, 54437, 13097, 2405, 10330]
                 train_num = 90000
-
-
-                loss_fct_1 = loss_choice(loss_func_name_1, class_freq, train_num,self.config.loss_mess['loss1'])
-                loss_fct_2 = loss_choice(loss_func_name_2, class_freq, train_num,self.config.loss_mess['loss2'])
+                loss_fct_1 = loss_choice(loss_func_name_1, class_freq, train_num, self.config.loss_mess['loss1'])
+                loss_fct_2 = loss_choice(loss_func_name_2, class_freq, train_num, self.config.loss_mess['loss2'])
 
                 if loss:
                     loss += alpha_ * loss_fct_1(logits, labels)
