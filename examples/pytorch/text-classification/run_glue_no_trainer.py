@@ -489,6 +489,30 @@ def main():
         texts = (
             (examples[sentence1_key],) if sentence2_key is None else (examples[sentence1_key], examples[sentence2_key])
         )
+        if args.train_mode=='simcse':
+            if sentence2_key is None:
+                mid_lst = [*zip(examples[sentence1_key],examples[sentence1_key])]
+                texts = ([row[i] for i in range(len(mid_lst[0])) for row in mid_lst],)
+            else:
+                mid_lst1 = [*zip(examples[sentence1_key],examples[sentence1_key])]
+                mid_lst1_ = []
+                for ml in mid_lst1:
+                    for i in range(len(ml)):
+                        mid_lst1_.append(ml[i])
+                mid_lst1 = mid_lst1_
+                del mid_lst1_
+
+                mid_lst2 = [*zip(examples[sentence2_key],examples[sentence2_key])]
+                mid_lst2_ = []
+                for ml in mid_lst2:
+                    for i in range(len(ml)):
+                        mid_lst2_.append(ml[i])
+                mid_lst2 = mid_lst2_
+                del mid_lst2_
+
+                # texts = ([row[i] for i in range(len(mid_lst1[0])) for row in mid_lst1],[row[i] for i in range(len(mid_lst2[0])) for row in mid_lst2])
+                texts = (mid_lst1,mid_lst2)
+
         result = tokenizer(*texts, padding=padding, max_length=args.max_length, truncation=True,add_special_tokens=True)
 
         if "label" in examples:
@@ -509,7 +533,14 @@ def main():
                     # print(labels_lst)
                     row_label.append(examples[lab][i])
                 labels_lst.append(row_label)
-            result['labels']=labels_lst
+
+            if args.train_mode=='simcse':
+                labels_lst = [*zip(labels_lst,labels_lst)]
+                labels_lst = [row[i] for i in range(len(labels_lst[0])) for row in labels_lst]
+                result['labels']=labels_lst
+            else:
+                result['labels']=labels_lst
+
         return result
 
     with accelerator.main_process_first():
@@ -543,9 +574,12 @@ def main():
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=(8 if accelerator.use_fp16 else None))
 
     # 开始定义训练相关对象
-
+    if args.train_mode=='simcse':
+        shuffle=False
+    else:
+        shuffle=True
     train_dataloader = DataLoader(
-        train_dataset, shuffle=True, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
+        train_dataset, shuffle=shuffle, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
     )
     eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
 
@@ -1023,6 +1057,7 @@ def main():
                     total_loss = 0
                 for step, batch in enumerate(train_dataloader):
                     model.train()
+
                     outputs = model(**batch)
 
                     loss = outputs.loss

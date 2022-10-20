@@ -1584,18 +1584,21 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
-        self.config = config
 
+        self.config = config
+        self.config.attention_probs_dropout_prob=config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
+        self.config.pooling='cls'
         self.bert = BertModel(config)
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
         )
         self.dropout = nn.Dropout(classifier_dropout)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -1712,7 +1715,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
