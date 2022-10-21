@@ -203,12 +203,14 @@ def parse_args():
         action="store_true",
         help="Whether or not to enable to load a pretrained model whose head dimensions are different.",
     )
+
     parser.add_argument(
         "--multicheck",
         type=bool,
         default=True,
         help="metric model by calucating acc,p,r,f1",
     )
+
     parser.add_argument(
         "--child_tune",
         action="store_true",
@@ -254,7 +256,7 @@ def accuracy_cal(y_true, y_pred):
 
 
 # metric 对象
-class muticheck:
+class multicheck:
     def __init__(self, check_method=['accuracy']):
         self.check_method = check_method
         self.predictions = []
@@ -262,17 +264,26 @@ class muticheck:
         self.eval_metric = {}
 
     def check(self,predictions_=None):
+
+        label = np.array([r.cpu().numpy() for r in self.references])
+        multilabel = type(label.tolist()[0]) is list
+
         if predictions_ is not None:
             predictions = np.array(predictions_.cpu().numpy())
         else:
             predictions = np.array([p.cpu().numpy() for p in self.predictions])
 
-        label = np.array([r.cpu().numpy() for r in self.references])
-        self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
-        self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
-        self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
-        self.eval_metric['micro-precision'],self.eval_metric['micro-recall'],self.eval_metric['micro-f1'],_ = precision_recall_fscore_support(label,predictions, average='micro',zero_division=0)
-
+        if multilabel:
+            self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
+            self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
+            self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
+            self.eval_metric['micro-precision'],self.eval_metric['micro-recall'],self.eval_metric['micro-f1'],_ = precision_recall_fscore_support(label,predictions, average='micro',zero_division=0)
+        else:
+            # print(label)
+            # print(predictions)
+            self.eval_metric['accuracy'] = accuracy_score(label,predictions)
+            self.eval_metric['precision'], self.eval_metric['recall'], self.eval_metric[
+                'f1'], _ = precision_recall_fscore_support(label, predictions,average='binary')
 
         # for metric_way in self.check_method:
         #     metric = evaluate.load(metric_way)
@@ -393,6 +404,7 @@ def main():
         else:
             num_labels = 1
 
+
     elif 'title' in raw_datasets['train'].column_names and 'abstract' in raw_datasets['train'].column_names:
         label_list = raw_datasets['train'].column_names
         label_list.sort()
@@ -415,6 +427,8 @@ def main():
             label_list.sort()  # Let's sort it for determinism
             num_labels = len(label_list)
 
+    # print(num_labels)
+    # print('check here!!')
     # Load pretrained model and tokenizer
     #
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
@@ -489,10 +503,19 @@ def main():
         texts = (
             (examples[sentence1_key],) if sentence2_key is None else (examples[sentence1_key], examples[sentence2_key])
         )
+
+# 静默处1
+        '''
         if args.train_mode=='simcse':
             if sentence2_key is None:
                 mid_lst = [*zip(examples[sentence1_key],examples[sentence1_key])]
-                texts = ([row[i] for i in range(len(mid_lst[0])) for row in mid_lst],)
+                mid_lst_ = []
+                for ml in mid_lst:
+                    for i in range(len(ml)):
+                        mid_lst_.append(ml[i])
+                mid_lst = mid_lst_
+                del mid_lst_
+                texts = (mid_lst,)
             else:
                 mid_lst1 = [*zip(examples[sentence1_key],examples[sentence1_key])]
                 mid_lst1_ = []
@@ -512,6 +535,7 @@ def main():
 
                 # texts = ([row[i] for i in range(len(mid_lst1[0])) for row in mid_lst1],[row[i] for i in range(len(mid_lst2[0])) for row in mid_lst2])
                 texts = (mid_lst1,mid_lst2)
+        '''
 
         result = tokenizer(*texts, padding=padding, max_length=args.max_length, truncation=True,add_special_tokens=True)
 
@@ -522,6 +546,15 @@ def main():
             else:
                 # In all cases, rename the column to labels because the model will expect that.
                 result["labels"] = examples["label"]
+
+            # 静默处2
+            # if args.train_mode=='simcse':
+            #     labels_lst = result["labels"]
+            #     labels_lst = [*zip(labels_lst, labels_lst)]
+            #     labels_lst = [row[i] for i in range(len(labels_lst[0])) for row in labels_lst]
+            #     result['labels'] = labels_lst
+
+
         elif 'title' in examples and 'abstract' in examples:
             labels_lst = []
             batch_length = len(examples['title'])
@@ -534,9 +567,10 @@ def main():
                     row_label.append(examples[lab][i])
                 labels_lst.append(row_label)
 
+            # 静默处3
             if args.train_mode=='simcse':
-                labels_lst = [*zip(labels_lst,labels_lst)]
-                labels_lst = [row[i] for i in range(len(labels_lst[0])) for row in labels_lst]
+                # labels_lst = [*zip(labels_lst,labels_lst)]
+                # labels_lst = [row[i] for i in range(len(labels_lst[0])) for row in labels_lst]
                 result['labels']=labels_lst
             else:
                 result['labels']=labels_lst
@@ -552,6 +586,7 @@ def main():
         )
 
     train_dataset = processed_datasets["train"]
+
     eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
 
 
@@ -561,6 +596,33 @@ def main():
     # Log a few random samples from the training set:
     for index in random.sample(range(len(train_dataset)), 3):
         logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
+
+    # 加collector
+
+    class CSECollator(object):
+        def __init__(self,
+                     tokenizer,
+                     features=("input_ids", "attention_mask", "token_type_ids"),
+                     max_len=100):
+            self.tokenizer = tokenizer
+            self.features = features
+            self.max_len = max_len
+
+        def collate(self, batch):
+            new_batch = []
+            for example in batch:
+                for i in range(2):
+                    # 每个句子重复两次
+                    new_batch.append({fea: example[fea] for fea in self.features})
+            new_batch = self.tokenizer.pad(
+                new_batch,
+                padding=True,
+                max_length=self.max_len,
+                return_tensors="pt"
+            )
+
+            return new_batch
+
 
     # DataLoaders creation:
     if args.pad_to_max_length:
@@ -573,15 +635,18 @@ def main():
         # of 8s, which will enable the use of Tensor Cores on NVIDIA hardware with compute capability >= 7.5 (Volta).
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=(8 if accelerator.use_fp16 else None))
 
+    collator = CSECollator(tokenizer, max_len=args.max_length)
+
+
     # 开始定义训练相关对象
     if args.train_mode=='simcse':
         shuffle=False
     else:
         shuffle=True
     train_dataloader = DataLoader(
-        train_dataset, shuffle=shuffle, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
+        train_dataset, shuffle=shuffle, collate_fn=collator.collate, batch_size=args.per_device_train_batch_size
     )
-    eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
+    eval_dataloader = DataLoader(eval_dataset, collate_fn=collator.collate, batch_size=args.per_device_eval_batch_size)
 
     # 优化器所在地
     # Optimizer
@@ -641,10 +706,11 @@ def main():
 
     # Get the metric function
     # 读入测试函数
+
     if args.task_name is not None:
         metric = evaluate.load("glue", args.task_name)
     elif args.multicheck:
-        metric = muticheck(['accuracy', 'precision', 'f1'])
+        metric = multicheck(['accuracy', 'precision', 'f1'])
     else:
         metric = evaluate.load("accuracy")
 
@@ -744,21 +810,29 @@ def main():
                             if args.output_dir is not None:
                                 output_dir = os.path.join(args.output_dir, output_dir)
                             accelerator.save_state(output_dir)
+
                             model.eval()
+
                             if args.multicheck:
                                 # not supprot accelerator
                                 check_batch_mun = 100
                                 metric.predictions=[]
                                 metric.references=[]
-                                if len(label_list) > 1:
+                                if len(label_list) > 2:
                                     for step, batch in enumerate(tqdm(eval_dataloader)):
                                         if check_batch_mun<=0:
                                             break
                                         with torch.no_grad():
                                             outputs = model(**batch)
-                                        predictions = torch.sigmoid(outputs.logits.squeeze())
-                                        # predictions = torch.ge(predictions, 0.5).type(torch.int)
-                                        metric.predictions.extend(predictions.cpu().detach().tolist())
+
+                                        if num_labels<=2:
+                                            predictions =outputs.logits.argmax(dim=-1)
+
+                                            metric.predictions.extend(predictions)
+                                        else:
+                                            predictions = torch.sigmoid(outputs.logits.squeeze())
+                                             # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                                            metric.predictions.extend(predictions.cpu().detach().tolist())
                                         metric.references.extend(batch["labels"].type(torch.int))
                                         # check_batch_mun-=1
 
@@ -774,7 +848,7 @@ def main():
                                         metric.references.extend(batch["labels"])
                                         # check_batch_mun -= 1
 
-                                if len(label_list) > 1:
+                                if len(label_list) > 2:
                                     best_th = 0.5
                                     default_th = 0.4
                                     best_dir = {}
@@ -782,6 +856,8 @@ def main():
                                     best_f1 = 0
                                     metric.predictions = torch.tensor(metric.predictions,
                                                                       device='cuda' if torch.cuda.is_available() else 'cpu')
+
+
                                     for threshold in thresholds:
                                         metric.eval_metric = {}
                                         predictions = torch.ge(metric.predictions,threshold).type(torch.int)
@@ -811,6 +887,42 @@ def main():
                                         },
                                         step=completed_steps,
                                     )
+                            else:
+                                samples_seen = 0
+                                for step, batch in enumerate(tqdm(eval_dataloader)):
+                                    with torch.no_grad():
+                                        outputs = model(**batch)
+                                    predictions = outputs.logits.argmax(
+                                        dim=-1) if not is_regression else outputs.logits.squeeze()
+                                    predictions, references = accelerator.gather((predictions, batch["labels"]))
+                                    # If we are in a multiprocess environment, the last batch has duplicates
+                                    if accelerator.num_processes > 1:
+                                        if step == len(eval_dataloader) - 1:
+                                            predictions = predictions[: len(eval_dataloader.dataset) - samples_seen]
+                                            references = references[: len(eval_dataloader.dataset) - samples_seen]
+                                        else:
+                                            samples_seen += references.shape[0]
+
+                                    metric.add_batch(
+                                        predictions=predictions,
+                                        references=references,
+                                    )
+
+                                eval_metric = metric.compute()
+
+                                logger.info(f"epoch {epoch}: {eval_metric}")
+
+                                if args.with_tracking:
+                                    accelerator.log(
+                                        {
+                                            "accuracy" if args.task_name is not None else "glue": eval_metric,
+                                            "train_loss": total_loss.item() / len(train_dataloader),
+                                            "epoch": epoch,
+                                            "step": completed_steps,
+                                        },
+                                        step=completed_steps,
+                                    )
+
                         if args.child_tune:
                             tune.report(mmicro_f1=metric.eval_metric['f1'])
 
@@ -822,15 +934,19 @@ def main():
                     metric.predictions = []
                     metric.references = []
                     # not supprot accelerator
-                    if len(label_list)>1:
+                    if len(label_list)>2:
                         for step, batch in enumerate(tqdm(eval_dataloader)):
                             with torch.no_grad():
                                 outputs = model(**batch)
-                            predictions = torch.sigmoid(outputs.logits.squeeze())
-                            # predictions = torch.ge(predictions, 0.5).type(torch.int)
-                            metric.predictions.extend(predictions.cpu().detach().tolist())
+                            if num_labels <= 2:
+                                predictions = outputs.logits.argmax(dim=-1)
+                                # print(predictions)
+                                metric.predictions.extend(predictions)
+                            else:
+                                predictions = torch.sigmoid(outputs.logits.squeeze())
+                                # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                                metric.predictions.extend(predictions.cpu().detach().tolist())
                             metric.references.extend(batch["labels"].type(torch.int))
-                            # check_batch_mun-=1
                     else:
                         for step, batch in enumerate(tqdm(eval_dataloader)):
                             with torch.no_grad():
@@ -840,7 +956,7 @@ def main():
                             metric.references.extend(batch["labels"])
 
 
-                    if len(label_list) > 1:
+                    if len(label_list) > 2:
                         default_th = 0.5
                         best_th = 0.5
                         best_dir = {}
@@ -1043,7 +1159,7 @@ def main():
 
 
         def easy_train_cycle(model_config=None):
-            metric = muticheck(['accuracy', 'precision', 'f1'])
+            metric = multicheck(['accuracy', 'precision', 'f1'])
             model.config.loss_mess=model_config
             # Only show the progress bar once on each machine.
             progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
@@ -1077,15 +1193,19 @@ def main():
                     metric.predictions = []
                     metric.references = []
                     # not supprot accelerator
-                    if len(label_list)>1:
+                    if len(label_list)>2:
                         for step, batch in enumerate(tqdm(eval_dataloader)):
                             with torch.no_grad():
                                 outputs = model(**batch)
-                            predictions = torch.sigmoid(outputs.logits.squeeze())
-                            # predictions = torch.ge(predictions, 0.5).type(torch.int)
-                            metric.predictions.extend(predictions.cpu().detach().tolist())
+                            if num_labels <= 2:
+                                predictions = outputs.logits.argmax(dim=-1)
+
+                                metric.predictions.extend(predictions)
+                            else:
+                                predictions = torch.sigmoid(outputs.logits.squeeze())
+                                # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                                metric.predictions.extend(predictions.cpu().detach().tolist())
                             metric.references.extend(batch["labels"].type(torch.int))
-                            # check_batch_mun-=1
                     else:
                         for step, batch in enumerate(tqdm(eval_dataloader)):
                             with torch.no_grad():
@@ -1094,7 +1214,7 @@ def main():
                             metric.predictions.extend(predictions)
                             metric.references.extend(batch["labels"])
 
-                    if len(label_list) > 1:
+                    if len(label_list) > 2:
                         default_th = 0.5
                         best_th = 0.5
                         best_dir = {}
@@ -1171,15 +1291,20 @@ def main():
         metric.predictions = []
         metric.references = []
         # not supprot accelerator
-        if len(label_list) > 1:
+        if num_labels > 1:
             for step, batch in enumerate(tqdm(eval_dataloader)):
                 with torch.no_grad():
                     outputs = model(**batch)
-                predictions = torch.sigmoid(outputs.logits.squeeze())
-                # predictions = torch.ge(predictions, 0.5).type(torch.int)
-                metric.predictions.extend(predictions.cpu().detach().tolist())
+                if num_labels <= 2:
+                    predictions = outputs.logits.argmax(dim=-1)
+                    metric.predictions.extend(predictions)
+
+                else:
+                    predictions = torch.sigmoid(outputs.logits.squeeze())
+                    # predictions = torch.ge(predictions, 0.5).type(torch.int)
+                    metric.predictions.extend(predictions.cpu().detach().tolist())
                 metric.references.extend(batch["labels"].type(torch.int))
-                # check_batch_mun-=1
+
         else:
             for step, batch in enumerate(tqdm(eval_dataloader)):
                 with torch.no_grad():
@@ -1188,7 +1313,7 @@ def main():
                 metric.predictions.extend(predictions)
                 metric.references.extend(batch["labels"])
 
-        if len(label_list) > 1:
+        if len(label_list) > 2:
             best_th = 0.5
             default_th = 0.1
             best_dir = {}
