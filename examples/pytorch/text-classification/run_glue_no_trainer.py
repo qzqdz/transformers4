@@ -822,7 +822,7 @@ def main():
                                 check_batch_mun = 100
                                 metric.predictions=[]
                                 metric.references=[]
-                                if len(label_list) > 2:
+                                if len(label_list) > 1:
                                     for step, batch in enumerate(tqdm(eval_dataloader)):
                                         if check_batch_mun<=0:
                                             break
@@ -938,7 +938,7 @@ def main():
                     metric.predictions = []
                     metric.references = []
                     # not supprot accelerator
-                    if len(label_list)>2:
+                    if len(label_list)>1:
                         for step, batch in enumerate(tqdm(eval_dataloader)):
                             with torch.no_grad():
                                 outputs = model(**batch)
@@ -1197,7 +1197,7 @@ def main():
                     metric.predictions = []
                     metric.references = []
                     # not supprot accelerator
-                    if len(label_list)>2:
+                    if len(label_list)>1:
                         for step, batch in enumerate(tqdm(eval_dataloader)):
                             with torch.no_grad():
                                 outputs = model(**batch)

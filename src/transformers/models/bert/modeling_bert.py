@@ -21,7 +21,7 @@ import os
 import warnings
 from dataclasses import dataclass
 from typing import List, Optional, Tuple, Union
-
+import numpy as np
 import torch
 import torch.utils.checkpoint
 from torch import nn
@@ -1581,10 +1581,11 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     Bert Model transformer with a sequence classification/regression head on top (a linear layer on top of the pooled
     output) e.g. for GLUE tasks.
     add all the nb loss into the multilabelclassification
+    simcse
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1712,6 +1713,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
 @add_start_docstrings(
     """
     this bert model is modified.
+    rdrop
     """,
     BERT_START_DOCSTRING,
 )
@@ -1855,8 +1857,15 @@ class BertForSequenceClassification2(BertPreTrainedModel):
             attentions=outputs_lst[0].attentions,
         )
 
-
-class BertForSequenceClassification3(BertPreTrainedModel):
+# 修改处
+@add_start_docstrings(
+    """
+    this bert model is modified.
+    origin
+    """,
+    BERT_START_DOCSTRING,
+)
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1937,7 +1946,10 @@ class BertForSequenceClassification3(BertPreTrainedModel):
                 else:
                     loss = loss_fct(logits, labels)
             elif self.config.problem_type == "single_label_classification":
-                loss_fct = CrossEntropyLoss()
+                loss_fct = CrossEntropyLoss(
+                    weight=torch.from_numpy(np.array([3303.0,700.0])),
+                    size_average=True
+                                            )
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
                 loss_fct = BCEWithLogitsLoss()
