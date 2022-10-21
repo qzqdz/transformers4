@@ -72,6 +72,7 @@ class muticheck:
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 # DEVICE = 'cpu'
 
+# c1
 DATA_PATH = r'E:\data\nlpcct5\nlpcct5.py'
 # MODEL_PATH = r'E:\model\transformers4\bertbase_lr20_bs8_256_lv1_1'
 # MODEL_PATH = r'E:\model\transformers4\bertflbce_lr20_bs8_256_lv1'
@@ -81,6 +82,8 @@ DATA_PATH = r'E:\data\nlpcct5\nlpcct5.py'
 # MODEL_PATH=r'E:\model\transformers4\bert_for_test\output_dir'
 MODEL_PATH=r'E:\model\transformers4\bertsimcse_lr20_bs8_256_lv1_1'
 
+
+# c2
 
 if not os.path.exists(os.path.join(MODEL_PATH, 'eval_res')):
     os.mkdir(os.path.join(MODEL_PATH, 'eval_res'))

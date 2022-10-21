@@ -629,13 +629,17 @@ def main():
         # If padding was already done ot max length, we use the default data collator that will just convert everything
         # to tensors.
         data_collator = default_data_collator
+        if args.train_mode=='simcse':
+            collator = CSECollator(tokenizer, max_len=args.max_length)
+            data_collator = collator.collate
     else:
         # Otherwise, `DataCollatorWithPadding` will apply dynamic padding for us (by padding to the maximum length of
         # the samples passed). When using mixed precision, we add `pad_to_multiple_of=8` to pad all tensors to multiple
         # of 8s, which will enable the use of Tensor Cores on NVIDIA hardware with compute capability >= 7.5 (Volta).
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=(8 if accelerator.use_fp16 else None))
 
-    collator = CSECollator(tokenizer, max_len=args.max_length)
+
+
 
 
     # 开始定义训练相关对象
@@ -644,9 +648,9 @@ def main():
     else:
         shuffle=True
     train_dataloader = DataLoader(
-        train_dataset, shuffle=shuffle, collate_fn=collator.collate, batch_size=args.per_device_train_batch_size
+        train_dataset, shuffle=shuffle, collate_fn=data_collator, batch_size=args.per_device_train_batch_size
     )
-    eval_dataloader = DataLoader(eval_dataset, collate_fn=collator.collate, batch_size=args.per_device_eval_batch_size)
+    eval_dataloader = DataLoader(eval_dataset, collate_fn=data_collator, batch_size=args.per_device_eval_batch_size)
 
     # 优化器所在地
     # Optimizer
