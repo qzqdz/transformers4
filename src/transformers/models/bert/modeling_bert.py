@@ -1585,14 +1585,14 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
 
         self.config = config
         self.config.attention_probs_dropout_prob=config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
-        self.config.pooling='cls'
+        self.config.pooling='first-last-avg'
         self.bert = BertModel(config)
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
@@ -1811,6 +1811,10 @@ class BertForSequenceClassification2(BertPreTrainedModel):
                         loss = alpha_ * loss_fct(logits, labels)
 
             elif self.config.problem_type == "single_label_classification":
+                # loss_fct = CrossEntropyLoss(
+                #     weight=torch.tensor([700.0,3303.0],device='cuda' if torch.cuda.is_available() else 'cpu'),
+                #     size_average=True
+                #                             )
                 loss_fct = CrossEntropyLoss()
 
                 if loss:
@@ -1865,7 +1869,7 @@ class BertForSequenceClassification2(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification3(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1947,9 +1951,10 @@ class BertForSequenceClassification(BertPreTrainedModel):
                     loss = loss_fct(logits, labels)
             elif self.config.problem_type == "single_label_classification":
                 loss_fct = CrossEntropyLoss(
-                    weight=torch.from_numpy(np.array([3303.0,700.0])),
+                    weight=torch.tensor([700.0,3303.0],device='cuda' if torch.cuda.is_available() else 'cpu'),
                     size_average=True
                                             )
+                # loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
                 loss_fct = BCEWithLogitsLoss()

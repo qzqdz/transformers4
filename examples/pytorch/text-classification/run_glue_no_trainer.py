@@ -638,8 +638,9 @@ def main():
         # of 8s, which will enable the use of Tensor Cores on NVIDIA hardware with compute capability >= 7.5 (Volta).
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=(8 if accelerator.use_fp16 else None))
 
-
-
+        if args.train_mode=='simcse':
+            collator = CSECollator(tokenizer, max_len=args.max_length)
+            data_collator = collator.collate
 
 
     # 开始定义训练相关对象
