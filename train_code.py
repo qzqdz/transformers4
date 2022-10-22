@@ -392,35 +392,38 @@ bertrdropcblossntrdbloss_lr20_bs8_256_lv1
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_uncased     --train_file D:/data/nlpcct5/nlpcct5.py  --max_length 256   --do_train True  --report_to wandb    --with_tracking --per_device_eval_batch_size 4  --per_device_train_batch_size 4  --learning_rate 1e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/bertrdropcblossntrdbloss_lr20_bs8_256_lv1/ --checkpointing_steps 1000
 
 
-zhihu_bertbase_lr40_bs16_128
+zhihu_bertbase_lr40_bs16_128 
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertbase_lr40_bs16_128   --checkpointing_steps epoch
 
-zhihu_bertrdrop_lr20_bs8_128
+
+zhihu_bertrdrop_lr20_bs8_128 3500
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertrdrop_lr20_bs8_128   --checkpointing_steps epoch
 
-zhihu_bertwrdrop_lr20_bs8_128 0.5kl
+
+
+
+zhihu_bertwrdrop_lr20_bs8_128 0.5kl w
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertwrdrop_lr20_bs8_128   --checkpointing_steps epoch
 {'accuracy': 0.7887323943661971, 'precision': 0.47058823529411764, 'recall': 0.5714285714285714, 'f1': 0.5161290322580646}
 
-zhihu_bertwrdrop_lr20_bs8_128_1 1kl
+zhihu_bertwrdrop_lr20_bs8_128_1 1kl w
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertwrdrop_lr20_bs8_128_1   --checkpointing_steps epoch
 {'accuracy': 0.7887323943661971, 'precision': 0.4722222222222222, 'recall': 0.6071428571428571, 'f1': 0.53125}
 
-zhihu_bertwrdrop_lr20_bs8_128_2 0.1kl
+zhihu_bertwrdrop_lr20_bs8_128_2 0.1kl w
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertwrdrop_lr20_bs8_128_2   --checkpointing_steps epoch
 {'accuracy': 0.7992957746478874, 'precision': 0.49206349206349204, 'recall': 0.5535714285714286, 'f1': 0.5210084033613446}
 
-zhihu_bertbase_simcse_lr80_bs16_128_3 a=0.5 rdrop
+zhihu_bertbase_simcse_lr80_bs16_128_3 a=0.5 rdrop w
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertwrdrop_lr20_bs8_128_3   --checkpointing_steps epoch
 {'accuracy': 0.7922535211267606, 'precision': 0.4782608695652174, 'recall': 0.5892857142857143, 'f1': 0.5279999999999999}
 
-zhihu_bertwrdrop_lr20_bs8_128_4 1652 rdrop
+zhihu_bertwrdrop_lr20_bs8_128_4 1652 rdrop w
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertwrdrop_lr20_bs8_128_4   --checkpointing_steps epoch
 {'accuracy': 0.8063380281690141, 'precision': 0.5081967213114754, 'recall': 0.5535714285714286, 'f1': 0.5299145299145298}
 
-
-
-
+zhihu_bertrdrop_lr20_bs8_128_5  a=100 rdrop w
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertwrdrop_lr20_bs8_128_5   --checkpointing_steps epoch
 
 zhihu_simcse
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True  --train_mode simcse  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_simcse_bert   --checkpointing_steps 753
@@ -456,6 +459,26 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 zhihu_bertrdrop_simcse_lr20_bs8_128_2 1ep 0.001 nowei
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/zhihu_simcse_bert_2     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertrdrop_simcse_lr20_bs8_128   --checkpointing_steps epoch
 {'accuracy': 0.8133802816901409, 'precision': 0.5245901639344263, 'recall': 0.5714285714285714, 'f1': 0.5470085470085471}
+
+D:/model/transformers4/zhihu_simcse_bert_3 1ep 0.5 nowei  flavg
+zhihu_bertbase_simcse_lr40_bs16_128_3
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/zhihu_simcse_bert_3     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_lr40_bs16_128_3   --checkpointing_steps epoch
+
+
+zhihu_bertbase_simcse_lr40_bs16_128_4 weight
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/zhihu_simcse_bert_3     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_lr40_bs16_128_4   --checkpointing_steps epoch
+{'accuracy': 0.7359154929577465, 'precision': 0.39080459770114945, 'recall': 0.6071428571428571, 'f1': 0.47552447552447547}
+
+
+zhihu_bertbase_simcse_lr40_bs16_128_4 weight epoch 6
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/zhihu_simcse_bert_3     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 6   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_lr40_bs16_128_5   --checkpointing_steps epoch
+{'accuracy': 0.7922535211267606, 'precision': 0.4727272727272727, 'recall': 0.4642857142857143, 'f1': 0.4684684684684684}
+
+zhihu_bertbase_simcse_lr40_bs16_128_5 weight 0.001 ep1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/zhihu_simcse_bert_2     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_lr40_bs16_128_5   --checkpointing_steps epoch
+{'accuracy': 0.7640845070422535, 'precision': 0.43956043956043955, 'recall': 0.7142857142857143, 'f1': 0.54421768707483}
+
+
 
 '''
 '''

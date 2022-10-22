@@ -25,7 +25,7 @@ import numpy as np
 import torch
 import torch.utils.checkpoint
 from torch import nn
-from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss
+from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss, MSELoss, BCELoss
 
 from ...activations import ACT2FN
 from ...modeling_outputs import (
@@ -1585,7 +1585,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1717,7 +1717,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification2(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1795,7 +1795,7 @@ class BertForSequenceClassification2(BertPreTrainedModel):
                     self.config.problem_type = "single_label_classification"
                 else:
                     self.config.problem_type = "multi_label_classification"
-        alpha_ = 1.0
+        alpha_ = 100.0
         for logits in logits_lst:
             if self.config.problem_type == "regression":
                 loss_fct = MSELoss()
@@ -1954,7 +1954,10 @@ class BertForSequenceClassification3(BertPreTrainedModel):
                     weight=torch.tensor([700.0,3303.0],device='cuda' if torch.cuda.is_available() else 'cpu'),
                     size_average=True
                                             )
+
+
                 # loss_fct = CrossEntropyLoss()
+
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
                 loss_fct = BCEWithLogitsLoss()
