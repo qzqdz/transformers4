@@ -1582,6 +1582,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     output) e.g. for GLUE tasks.
     add all the nb loss into the multilabelclassification
     simcse
+    simcse_sup
     """,
     BERT_START_DOCSTRING,
 )
@@ -1592,7 +1593,8 @@ class BertForSequenceClassification1(BertPreTrainedModel):
 
         self.config = config
         self.config.attention_probs_dropout_prob=config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
-        self.config.pooling='first-last-avg'
+        self.config.pooling='cls'
+
         self.bert = BertModel(config)
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
@@ -1701,7 +1703,12 @@ class BertForSequenceClassification1(BertPreTrainedModel):
         #
         #         loss = loss_fct(logits, labels)
 
-        loss = util_loss.simcse_unsup_loss(pooled_output)
+
+        if self.config.train_mode == 'simcse':
+            loss = util_loss.simcse_unsup_loss(pooled_output)
+
+        elif self.config.train_mode == 'simcse_sup':
+            loss = util_loss.simcse_sup_loss(pooled_output, labels)
 
 
         return SequenceClassifierOutput(
@@ -1717,7 +1724,7 @@ class BertForSequenceClassification1(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification2(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1869,7 +1876,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification3(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1954,13 +1961,14 @@ class BertForSequenceClassification3(BertPreTrainedModel):
                     weight=torch.tensor([700.0,3303.0],device='cuda' if torch.cuda.is_available() else 'cpu'),
                     size_average=True
                                             )
-
-
                 # loss_fct = CrossEntropyLoss()
 
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
-                loss_fct = BCEWithLogitsLoss()
+                class_freq = [2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841,
+                              1137, 30216, 2760, 54437, 13097, 2405, 10330]
+                pos_weight = 90000./torch.tensor(class_freq,device='cuda' if torch.cuda.is_available() else 'cpu')
+                loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight)
                 loss = loss_fct(logits, labels)
 
 

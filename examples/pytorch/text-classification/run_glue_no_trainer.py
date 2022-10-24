@@ -400,6 +400,7 @@ def main():
         is_regression = args.task_name == "stsb"
         if not is_regression:
             label_list = raw_datasets["train"].features["label"].names
+
             num_labels = len(label_list)
         else:
             num_labels = 1
@@ -410,6 +411,15 @@ def main():
         label_list.sort()
         label_list.remove('title')
         label_list.remove('abstract')
+        num_labels = len(label_list)
+        is_regression=False
+    elif 'title1' in raw_datasets['train'].column_names and 'abstract1' in raw_datasets['train'].column_names:
+        label_list = raw_datasets['train'].column_names
+        label_list.sort()
+        label_list.remove('title1')
+        label_list.remove('abstract1')
+        label_list.remove('title2')
+        label_list.remove('abstract2')
         num_labels = len(label_list)
         is_regression=False
 
@@ -433,7 +443,11 @@ def main():
     #
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
-
+    try:
+        print('the label list is here!')
+        print(label_list)
+    except:
+        pass
 
     # 定义模型处
     tokenizer = AutoTokenizer.from_pretrained(args.model_name_or_path, use_fast=not args.use_slow_tokenizer)
@@ -458,6 +472,8 @@ def main():
             sentence1_key, sentence2_key = "sentence1", "sentence2"
         elif 'title' in non_label_column_names and 'abstract' in non_label_column_names:
             sentence1_key,sentence2_key = 'title', 'abstract'
+        elif 'title1' in non_label_column_names and 'abstract1' in non_label_column_names:
+            sentence1_key, sentence2_key, sentence3_key, sentence4_key = 'title1', 'abstract1', 'title2', 'abstract2'
         else:
             if len(non_label_column_names) >= 2:
                 sentence1_key, sentence2_key = non_label_column_names[:2]
@@ -536,6 +552,27 @@ def main():
                 # texts = ([row[i] for i in range(len(mid_lst1[0])) for row in mid_lst1],[row[i] for i in range(len(mid_lst2[0])) for row in mid_lst2])
                 texts = (mid_lst1,mid_lst2)
         '''
+        if args.train_mode=='simcse_sup':
+            # [(1,1),(2,2)]->[1,1,2,2]
+            mid_lst1 = [*zip(examples[sentence1_key], examples[sentence3_key])]
+            mid_lst1_ = []
+            for ml in mid_lst1:
+                for i in range(len(ml)):
+                    mid_lst1_.append(ml[i])
+            mid_lst1 = mid_lst1_
+            del mid_lst1_
+
+            mid_lst2 = [*zip(examples[sentence2_key], examples[sentence4_key])]
+            mid_lst2_ = []
+            for ml in mid_lst2:
+                for i in range(len(ml)):
+                    mid_lst2_.append(ml[i])
+            mid_lst2 = mid_lst2_
+            del mid_lst2_
+
+            texts = (mid_lst1, mid_lst2)
+
+
 
         result = tokenizer(*texts, padding=padding, max_length=args.max_length, truncation=True,add_special_tokens=True)
 
@@ -555,25 +592,36 @@ def main():
             #     result['labels'] = labels_lst
 
 
-        elif 'title' in examples and 'abstract' in examples:
+        elif ('title' in examples and 'abstract' in examples) or ('title1' in examples and 'abstract1' in examples):
             labels_lst = []
-            batch_length = len(examples['title'])
+            try:
+                batch_length = len(examples['title'])
+            except:
+                batch_length = len(examples['title1'])
             for lb in examples:
                 assert batch_length==len(examples[lb]),'error!'
-            for i in range(batch_length):
-                row_label = []
-                for lab in label_list:
-                    # print(labels_lst)
-                    row_label.append(examples[lab][i])
-                labels_lst.append(row_label)
 
-            # 静默处3
-            if args.train_mode=='simcse':
-                # labels_lst = [*zip(labels_lst,labels_lst)]
-                # labels_lst = [row[i] for i in range(len(labels_lst[0])) for row in labels_lst]
-                result['labels']=labels_lst
+
+            if args.train_mode=='simcse' or args.train_mode=='simcse_sup':
+                for i in range(batch_length):
+                    row_label = []
+                    for lab in label_list:
+                        # print(labels_lst)
+                        row_label.append(examples[lab][i])
+
+                    labels_lst.append(row_label)
+                    labels_lst.append(row_label)
+                # print(len(labels_lst))
+
             else:
-                result['labels']=labels_lst
+                for i in range(batch_length):
+                    row_label = []
+                    for lab in label_list:
+                        # print(labels_lst)
+                        row_label.append(examples[lab][i])
+                    labels_lst.append(row_label)
+
+            result['labels']=labels_lst
 
         return result
 
@@ -598,11 +646,10 @@ def main():
         logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
 
     # 加collector
-
-    class CSECollator(object):
+    class unsup_CSECollator(object):
         def __init__(self,
                      tokenizer,
-                     features=("input_ids", "attention_mask", "token_type_ids"),
+                     features=("input_ids", "attention_mask", "token_type_ids","labels"),
                      max_len=100):
             self.tokenizer = tokenizer
             self.features = features
@@ -623,14 +670,13 @@ def main():
 
             return new_batch
 
-
     # DataLoaders creation:
     if args.pad_to_max_length:
         # If padding was already done ot max length, we use the default data collator that will just convert everything
         # to tensors.
         data_collator = default_data_collator
         if args.train_mode=='simcse':
-            collator = CSECollator(tokenizer, max_len=args.max_length)
+            collator = unsup_CSECollator(tokenizer, max_len=args.max_length)
             data_collator = collator.collate
     else:
         # Otherwise, `DataCollatorWithPadding` will apply dynamic padding for us (by padding to the maximum length of
@@ -639,12 +685,12 @@ def main():
         data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=(8 if accelerator.use_fp16 else None))
 
         if args.train_mode=='simcse':
-            collator = CSECollator(tokenizer, max_len=args.max_length)
+            collator = unsup_CSECollator(tokenizer, max_len=args.max_length)
             data_collator = collator.collate
 
 
     # 开始定义训练相关对象
-    if args.train_mode=='simcse':
+    if args.train_mode=='simcse' or args.train_mode=='simcse_sup':
         shuffle=False
     else:
         shuffle=True
@@ -857,7 +903,7 @@ def main():
                                     best_th = 0.5
                                     default_th = 0.4
                                     best_dir = {}
-                                    thresholds = (np.array(range(-11, 10)) / 100) + default_th
+                                    thresholds = (np.array(range(-20, 20)) / 100) + default_th
                                     best_f1 = 0
                                     metric.predictions = torch.tensor(metric.predictions,
                                                                       device='cuda' if torch.cuda.is_available() else 'cpu')
@@ -965,7 +1011,7 @@ def main():
                         default_th = 0.5
                         best_th = 0.5
                         best_dir = {}
-                        thresholds = (np.array(range(-10, 11)) / 100) + default_th
+                        thresholds = (np.array(range(-20, 20)) / 100) + default_th
                         best_f1 = 0
                         metric.predictions = torch.tensor(metric.predictions,
                                                           device='cuda' if torch.cuda.is_available() else 'cpu')
@@ -1066,12 +1112,13 @@ def main():
                         repo.push_to_hub(commit_message="End of training", auto_lfs_prune=True)
 
         def simcse_train_cycle():
-            model.config.pooling='last-avg'
+            model.config.pooling='cls'
             model.config.loss_mess = {
                 'loss1': {},
                 'loss2': {}
             }
-            model.config.train_mode = 'simcse'
+
+            model.config.train_mode = args.train_mode
 
             if args.with_tracking:
                 accelerator.log(
@@ -1122,6 +1169,7 @@ def main():
                         if resume_step is not None and step < resume_step:
                             completed_steps += 1
                             continue
+
                     outputs = model(**batch)
 
                     loss = outputs.loss
@@ -1152,7 +1200,7 @@ def main():
                             if args.with_tracking:
                                 accelerator.log(
                                     {
-                                        "train_loss": total_loss,
+                                        "loss": loss,
                                         "epoch": epoch,
                                         "step": step,
                                     }
@@ -1164,7 +1212,9 @@ def main():
 
 
         def easy_train_cycle(model_config=None):
-            metric = multicheck(['accuracy', 'precision', 'f1'])
+            # metric = multicheck(['accuracy', 'precision', 'f1'])
+            metric = multicheck(['f1'])
+
             model.config.loss_mess=model_config
             # Only show the progress bar once on each machine.
             progress_bar = tqdm(range(args.max_train_steps), disable=not accelerator.is_local_main_process)
@@ -1223,7 +1273,7 @@ def main():
                         default_th = 0.5
                         best_th = 0.5
                         best_dir = {}
-                        thresholds = (np.array(range(-10, 11)) / 100) + default_th
+                        thresholds = (np.array(range(-20, 20)) / 100) + default_th
                         best_f1 = 0
                         metric.predictions = torch.tensor(metric.predictions,
                                                           device='cuda' if torch.cuda.is_available() else 'cpu')
@@ -1274,8 +1324,10 @@ def main():
             with open(os.path.join(args.output_dir,'best_para.txt'),'w',encoding='utf-8') as f:
                 f.write(res_para)
 
-        elif args.train_mode=='simcse':
+        elif args.train_mode=='simcse' or args.train_mode=='simcse_sup':
             simcse_train_cycle()
+            if args.output_dir is not None:
+                accelerator.save_state(args.output_dir)
             return
         else:
             train_cycle()
@@ -1320,9 +1372,9 @@ def main():
 
         if len(label_list) > 2:
             best_th = 0.5
-            default_th = 0.1
+            default_th = 0.4
             best_dir = {}
-            thresholds = (np.array(range(-10, 40)) / 100) + default_th
+            thresholds = (np.array(range(-20, 30)) / 100) + default_th
             best_f1 = 0
             metric.predictions = torch.tensor(metric.predictions,
                                               device='cuda' if torch.cuda.is_available() else 'cpu')
