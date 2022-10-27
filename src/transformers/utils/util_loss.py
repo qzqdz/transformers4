@@ -278,6 +278,9 @@ def simcse_sup_loss(y_pred,label,temp=0.05):
     """
     有监督的损失函数
     """
+    print('==========================')
+    print(label)
+    print('--------------------------')
     DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
     y_true = []
     batch_len = len(label)

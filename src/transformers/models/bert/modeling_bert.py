@@ -1586,7 +1586,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1876,7 +1876,7 @@ class BertForSequenceClassification2(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification3(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1965,10 +1965,15 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
-                class_freq = [2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841,
-                              1137, 30216, 2760, 54437, 13097, 2405, 10330]
-                pos_weight = 90000./torch.tensor(class_freq,device='cuda' if torch.cuda.is_available() else 'cpu')
-                loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight)
+                # class_freq = [2787, 11036, 26258, 5430, 3626, 11976, 645, 39227, 4390, 5310, 45805, 35047, 8656, 1841,
+                #               1137, 30216, 2760, 54437, 13097, 2405, 10330]
+                # pos_weight = 90000./torch.tensor(class_freq,device='cuda' if torch.cuda.is_available() else 'cpu')
+                # pos_weight = 90000. / torch.tensor(class_freq)
+                # loss_fct = BCEWithLogitsLoss(pos_weight=pos_weight)
+
+                loss_fct = BCEWithLogitsLoss()
+
+
                 loss = loss_fct(logits, labels)
 
 
