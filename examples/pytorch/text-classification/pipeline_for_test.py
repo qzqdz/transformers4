@@ -81,8 +81,8 @@ DATA_PATH = r'E:\data\nlpcct5\nlpcct5.py'
 # MODEL_PATH = r'E:\model\transformers4\bertcdloss_md_lr20_bs8_256_lv1'
 # MODEL_PATH=r'E:\model\transformers4\bert_for_test\output_dir'
 # MODEL_PATH=r'E:\model\transformers4\bertsimcse_lr20_bs8_256_lv1_1'
+# MODEL_PATH=r'E:\model\transformers4\simcse_sup_bertbase_lr20_bs8_256'
 MODEL_PATH=r'E:\model\transformers4\simcse_sup_bertbase_lr20_bs8_256'
-
 
 # c2
 

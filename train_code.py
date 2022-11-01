@@ -258,6 +258,7 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_
 train for simcse_sup2 sim together
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_rand_sim_together.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8   --train_mode simcse_sup  --do_train True   --num_train_epochs 3     --output_dir E:/model/transformers4/nlpcc_simcse_sup_bert_2/  --checkpointing_steps 1000
 
+train for simcse_sup3 sim together
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_rand_sim_together.py   --max_length 256  --per_device_train_batch_size 8   --per_device_eval_batch_size 8   --train_mode simcse_sup  --do_train True   --num_train_epochs 3     --output_dir E:/model/transformers4/nlpcc_simcse_sup_bert_3/  --checkpointing_steps 1000
 
 
@@ -269,7 +270,20 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_
 
 
 bertsimcsesimt_lr20_bs8_256_lv1
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/nlpcc_simcse_bert2     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True    --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8  --report_to wandb --with_tracking   --num_train_epochs 3     --output_dir E:/model/transformers4/bertsimcse_lr20_bs8_256_lv1_2/  --checkpointing_steps 1000
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/nlpcc_simcse_sup_bert_2     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True    --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8  --report_to wandb --with_tracking   --num_train_epochs 3     --output_dir E:/model/transformers4/bertsimcsesimt_lr20_bs8_256_lv1/  --checkpointing_steps 1000
+
+bertsimcsesimt_lr20_bs8_256_lv1_1 1000epochtrain
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/nlpcc_simcse_sup_bert_2/step_1000     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True    --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8  --report_to wandb --with_tracking   --num_train_epochs 3     --output_dir E:/model/transformers4/bertsimcsesimt_lr20_bs8_256_lv1_1/  --checkpointing_steps 1000
+
+
+bertsimcsesimt_lr20_bs8_256_lv1_2 10000epochtrain
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/nlpcc_simcse_sup_bert_2/step_10000     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True    --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8  --report_to wandb --with_tracking   --num_train_epochs 3     --output_dir E:/model/transformers4/bertsimcsesimt_lr20_bs8_256_lv1_2/  --checkpointing_steps 1000
+
+
+bertsimcsesimt_lr20_bs8_256_lv1_3 0.15 8000epochtrain
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/nlpcc_simcse_sup_bert_3/step_8000     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True    --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8  --report_to wandb --with_tracking   --num_train_epochs 3     --output_dir E:/model/transformers4/bertsimcsesimt_lr20_bs8_256_lv1_3/  --checkpointing_steps 1000
+
+
 
 
 reuters
