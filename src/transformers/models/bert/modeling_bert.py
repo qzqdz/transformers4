@@ -58,9 +58,12 @@ logger = logging.get_logger(__name__)
 # 从data中读取label_dir
 if os.path.exists(os.path.abspath(r'E:\data\nlpcct5')):
     FILE_PATH = os.path.abspath(r'E:\data\nlpcct5')
+elif os.path.exists('/home/ydc/data/nlpcct5'):
+    FILE_PATH = os.path.abspath('/home/ydc/data/nlpcct5')
+elif os.path.exists('/opt/data/yanyu/data/nlpcct5'):
+    FILE_PATH = os.path.abspath('/opt/data/yanyu/data/nlpcct5')
 else:
     FILE_PATH = os.path.abspath(r'D:\data\nlpcct5')
-
 LABEL_PATH = os.path.join(FILE_PATH,'label_dir')
 
 
@@ -1897,7 +1900,7 @@ def get_constr_out(x, R):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification3(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2009,10 +2012,6 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
 
 
-
-
-
-
 # 修改处
 @add_start_docstrings(
     """
@@ -2021,7 +2020,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification4(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels

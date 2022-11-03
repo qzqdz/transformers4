@@ -557,6 +557,10 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_
 '''
 computer4 test
 
+bertbase_lr20_bs8_256_lv12
+CUDA_LAUNCH_BLOCKING=1 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /home/ydc/model/origin_model/bert_uncase/    --train_file /home/ydc/data/nlpcct5/nlpcct5_hm12.py  --do_train True  --learning_rate 2e-5  --report_to wandb   --with_tracking      --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /home/ydc/del/yy_model_set/bertbase_lr20_bs8_256_lv12  --checkpointing_steps 2000
+
+
 '''
 
 # import torch
