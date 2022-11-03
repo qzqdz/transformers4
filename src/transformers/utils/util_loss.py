@@ -308,3 +308,5 @@ def simcse_sup_loss(y_pred,label,temp=0.05):
     # 计算相似度矩阵与y_true的交叉熵损失
     loss = F.cross_entropy(sim, y_true)
     return loss
+
+

@@ -55,6 +55,15 @@ from .configuration_bert import BertConfig
 
 logger = logging.get_logger(__name__)
 
+# 从data中读取label_dir
+if os.path.exists(os.path.abspath(r'E:\data\nlpcct5')):
+    FILE_PATH = os.path.abspath(r'E:\data\nlpcct5')
+else:
+    FILE_PATH = os.path.abspath(r'D:\data\nlpcct5')
+
+LABEL_PATH = os.path.join(FILE_PATH,'label_dir')
+
+
 _CHECKPOINT_FOR_DOC = "bert-base-uncased"
 _CONFIG_FOR_DOC = "BertConfig"
 _TOKENIZER_FOR_DOC = "BertTokenizer"
@@ -1575,6 +1584,8 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
 
 
 
+
+
 # 文本分类处
 @add_start_docstrings(
     """
@@ -1868,15 +1879,149 @@ class BertForSequenceClassification2(BertPreTrainedModel):
             attentions=outputs_lst[0].attentions,
         )
 
+
+def get_constr_out(x, R):
+    """ Given the output of the neural network x returns the output of MCM given the hierarchy constraint expressed in the matrix R """
+    c_out = x.double()
+    c_out = c_out.unsqueeze(1)
+    c_out = c_out.expand(len(x),R.shape[1], R.shape[1])
+    R_batch = R.expand(len(x),R.shape[1], R.shape[1])
+    final_out, _ = torch.max(R_batch*c_out.double(), dim = 2)
+    return final_out
+
 # 修改处
 @add_start_docstrings(
     """
     this bert model is modified.
-    origin
+    hm12 classificaion
     """,
     BERT_START_DOCSTRING,
 )
 class BertForSequenceClassification(BertPreTrainedModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_labels = config.num_labels
+        self.config = config
+        with open(os.path.join(LABEL_PATH, 'R12.txt'), 'r', encoding='utf-8') as f:
+            R12 = eval(f.read())
+        self.R12 = torch.tensor(R12,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
+
+
+        self.bert = BertModel(config)
+        classifier_dropout = (
+            config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
+        )
+        self.dropout = nn.Dropout(classifier_dropout)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    @add_start_docstrings_to_model_forward(BERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_code_sample_docstrings(
+        processor_class=_TOKENIZER_FOR_DOC,
+        checkpoint=_CHECKPOINT_FOR_SEQUENCE_CLASSIFICATION,
+        output_type=SequenceClassifierOutput,
+        config_class=_CONFIG_FOR_DOC,
+        expected_output=_SEQ_CLASS_EXPECTED_OUTPUT,
+        expected_loss=_SEQ_CLASS_EXPECTED_LOSS,
+    )
+    def forward(
+        self,
+        input_ids: Optional[torch.Tensor] = None,
+        attention_mask: Optional[torch.Tensor] = None,
+        token_type_ids: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.Tensor] = None,
+        head_mask: Optional[torch.Tensor] = None,
+        inputs_embeds: Optional[torch.Tensor] = None,
+        labels: Optional[torch.Tensor] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict: Optional[bool] = None,
+    ) -> Union[Tuple[torch.Tensor], SequenceClassifierOutput]:
+        r"""
+        labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+            Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,
+            config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If
+            `config.num_labels > 1` a classification loss is computed (Cross-Entropy).
+        """
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        outputs = self.bert(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        pooled_output = outputs[1]
+
+        pooled_output = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output)
+
+        loss = None
+        if labels is not None:
+            if self.config.problem_type is None:
+                if self.num_labels == 1:
+                    self.config.problem_type = "regression"
+                elif self.num_labels > 1 and (labels.dtype == torch.long or labels.dtype == torch.int):
+                    self.config.problem_type = "single_label_classification"
+                else:
+                    self.config.problem_type = "multi_label_classification"
+
+            # print(self.config.problem_type)
+            if self.config.problem_type == "regression":
+                loss_fct = MSELoss()
+                if self.num_labels == 1:
+                    loss = loss_fct(logits.squeeze(), labels.squeeze())
+                else:
+                    loss = loss_fct(logits, labels)
+            elif self.config.problem_type == "single_label_classification":
+                loss_fct = CrossEntropyLoss(
+                    weight=torch.tensor([700.0,3303.0],device='cuda' if torch.cuda.is_available() else 'cpu'),
+                    size_average=True
+                                            )
+                # loss_fct = CrossEntropyLoss()
+
+                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            elif self.config.problem_type == "multi_label_classification":
+
+                sigmoid_output = torch.nn.functional.sigmoid(logits)
+
+                if self.training:
+                    constr_output = get_constr_out(sigmoid_output, self.R12)
+                    train_output = labels*sigmoid_output.double()
+                    train_output = get_constr_out(train_output, self.R12)
+                    outputs = (1 - labels) * constr_output.double() + labels * train_output
+
+                    # 此处可加权~
+                    loss_fct = BCELoss()
+                    loss = loss_fct(outputs.double(),labels.double())
+                    return {'loss': loss, 'outputs': outputs}
+                else:
+                    outputs = get_constr_out(sigmoid_output, self.R12)
+                    return {'outputs':outputs}
+
+
+
+
+
+
+
+# 修改处
+@add_start_docstrings(
+    """
+    this bert model is modified a little bit.
+    origin
+    """,
+    BERT_START_DOCSTRING,
+)
+class BertForSequenceClassification4(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
