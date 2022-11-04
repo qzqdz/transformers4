@@ -1950,7 +1950,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
         """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
-        outputs = self.bert(
+        level_mess = self.bert(
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
@@ -1962,7 +1962,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
             return_dict=return_dict,
         )
 
-        pooled_output = outputs[1]
+        pooled_output = level_mess[1]
 
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
@@ -1993,26 +1993,77 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
+                
 
-                sigmoid_output = torch.sigmoid(logits)
 
-
-                constr_output = get_constr_out(sigmoid_output, self.R12)
-                train_output = labels*sigmoid_output.double()
+                # no sigmoid
+                # 1.8 1loss logits
+                constr_output = get_constr_out(logits, self.R12)
+                train_output = labels*logits.double()
                 train_output = get_constr_out(train_output, self.R12)
-                outputs = (1 - labels) * constr_output.double() + labels * train_output
+                level_mess = (1 - labels) * constr_output.double() + labels * train_output
 
                 if self.training:
                     # 此处可加权~
-                    loss_fct1 = BCELoss()
-                    loss_fct2 = BCELoss()
-                    loss = 0.5*loss_fct1(outputs.double(),labels.double())+0.5*loss_fct2(sigmoid_output.double(),labels.double())
-                    outputs_ = torch.sigmoid((outputs+sigmoid_output).double())
+                    loss_fct = BCEWithLogitsLoss()
+                    loss = loss_fct(0.99*logits.double() + 0.01*level_mess.double(),labels.double())
+                    # loss = loss_fct(logits.double(),labels.double())
+                    outputs_ = torch.sigmoid((0.1*level_mess+0.9*logits).double())
+
                     return {'loss': loss, 'outputs': outputs_}
+
                 else:
-                    # outputs = sigmoid_output
-                    outputs_ = torch.sigmoid((outputs + sigmoid_output).double())
+                    # outputs_ = sigmoid_output
+                    outputs_ = torch.sigmoid((0.1*level_mess + 0.9*logits).double())
                     return {'outputs': outputs_}
+                
+                # after sigmoid
+                # sigmoid_output = torch.sigmoid(logits)
+                # 
+                # 
+                # constr_output = get_constr_out(sigmoid_output, self.R12)
+                # train_output = labels*sigmoid_output.double()
+                # train_output = get_constr_out(train_output, self.R12)
+                # outputs = (1 - labels) * constr_output.double() + labels * train_output
+                # 
+                # if self.training:
+                #     # 此处可加权~
+                #     # loss_fct1 = BCELoss()
+                #     # loss_fct2 = BCELoss()
+                #     # loss = 0.3*loss_fct1(outputs.double(),labels.double())+0.7*loss_fct2(sigmoid_output.double(),labels.double())
+                #     # outputs_ = torch.sigmoid((outputs+sigmoid_output).double())
+                # 
+                #     # 1.4 1loss
+                #     # loss_fct = BCELoss()
+                #     # loss = loss_fct(0.7*sigmoid_output.double() + 0.3*outputs.double(),labels.double())
+                #     # outputs_ = torch.sigmoid((0.3*outputs+0.7*sigmoid_output).double())
+                # 
+                #     # 1.5 1loss
+                #     loss_fct = BCELoss()
+                #     # loss = loss_fct(0.9*sigmoid_output.double() + 0.1*outputs.double(),labels.double())
+                #     loss = loss_fct(sigmoid_output.double(),labels.double())
+                #     outputs_ = torch.sigmoid((0.1*outputs+0.9*sigmoid_output).double())
+                # 
+                #     return {'loss': loss, 'outputs': outputs_}
+                # 
+                # else:
+                #     # outputs_ = sigmoid_output
+                #     outputs_ = torch.sigmoid((0.1*outputs + 0.9*sigmoid_output).double())
+                #     return {'outputs': outputs_}
+
+
+                # 1.3
+                # if self.training:
+                #     # 此处可加权~
+                #     loss_fct1 = BCELoss()
+                #     loss_fct2 = BCELoss()
+                #     loss = 0.3*loss_fct1(outputs.double(),labels.double())+0.7*loss_fct2(sigmoid_output.double(),labels.double())
+                #     outputs_ = torch.sigmoid((outputs+sigmoid_output).double())
+                #     return {'loss': loss, 'outputs': outputs_}
+                # else:
+                #     # outputs = sigmoid_output
+                #     outputs_ = torch.sigmoid((outputs + sigmoid_output).double())
+                #     return {'outputs': outputs_}
 
 
 
