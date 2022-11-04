@@ -274,7 +274,7 @@ class multicheck:
             predictions = np.array([p.cpu().numpy() for p in self.predictions])
 
         if multilabel:
-            print(label[0],predictions[0])
+            # print(label[0],predictions[0])
             self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
             self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
             self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
