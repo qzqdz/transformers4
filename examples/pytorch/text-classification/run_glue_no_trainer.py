@@ -274,6 +274,7 @@ class multicheck:
             predictions = np.array([p.cpu().numpy() for p in self.predictions])
 
         if multilabel:
+            print(label[0],predictions[0])
             self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
             self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
             self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
@@ -642,6 +643,7 @@ def main():
     if args.child_tune:
         train_dataset = train_dataset.select(range(3000))
         eval_dataset = eval_dataset.select(range(500))
+    eval_dataset = eval_dataset.select(range(2))
     # Log a few random samples from the training set:
     for index in random.sample(range(len(train_dataset)), 3):
         logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
@@ -1162,7 +1164,8 @@ def main():
                 if args.with_tracking:
                     total_loss = 0
                 for step, batch in enumerate(train_dataloader):
-                    # print(batch)
+                    # print(batch['labels'])
+                    # print('debug labels!')
                     model.train()
                     # We need to skip steps until we reach the resumed step
                     if args.resume_from_checkpoint and epoch == starting_epoch:
@@ -1215,7 +1218,8 @@ def main():
                                     metric.predictions.extend(predictions.cpu().detach().tolist())
                                     metric.references.extend(batch["labels"].type(torch.int))
                                     # check_batch_mun-=1
-
+                                    # print(metric.references[-1])
+                                    # print('debug references!')
 
                                 best_th = 0.5
                                 default_th = 0.4

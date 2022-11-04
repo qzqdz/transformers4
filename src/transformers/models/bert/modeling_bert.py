@@ -1900,7 +1900,7 @@ def get_constr_out(x, R):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification3(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1994,21 +1994,25 @@ class BertForSequenceClassification3(BertPreTrainedModel):
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
 
-                sigmoid_output = torch.nn.functional.sigmoid(logits)
+                sigmoid_output = torch.sigmoid(logits)
+
+
+                constr_output = get_constr_out(sigmoid_output, self.R12)
+                train_output = labels*sigmoid_output.double()
+                train_output = get_constr_out(train_output, self.R12)
+                outputs = (1 - labels) * constr_output.double() + labels * train_output
 
                 if self.training:
-                    constr_output = get_constr_out(sigmoid_output, self.R12)
-                    train_output = labels*sigmoid_output.double()
-                    train_output = get_constr_out(train_output, self.R12)
-                    outputs = (1 - labels) * constr_output.double() + labels * train_output
-
                     # 此处可加权~
-                    loss_fct = BCELoss()
-                    loss = loss_fct(outputs.double(),labels.double())
-                    return {'loss': loss, 'outputs': outputs}
+                    loss_fct1 = BCELoss()
+                    loss_fct2 = BCELoss()
+                    loss = 0.5*loss_fct1(outputs.double(),labels.double())+0.5*loss_fct2(sigmoid_output.double(),labels.double())
+                    outputs_ = torch.sigmoid((outputs+sigmoid_output).double())
+                    return {'loss': loss, 'outputs': outputs_}
                 else:
-                    outputs = get_constr_out(sigmoid_output, self.R12)
-                    return {'outputs':outputs}
+                    # outputs = sigmoid_output
+                    outputs_ = torch.sigmoid((outputs + sigmoid_output).double())
+                    return {'outputs': outputs_}
 
 
 
@@ -2020,7 +2024,7 @@ class BertForSequenceClassification3(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification4(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
