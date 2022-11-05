@@ -1908,7 +1908,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
         with open(os.path.join(LABEL_PATH, 'R12.txt'), 'r', encoding='utf-8') as f:
             R12 = eval(f.read())
         self.R12 = torch.tensor(R12,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
-
+        self.R12_ = torch.tensor(R12, device='cuda' if torch.cuda.is_available() else 'cpu')
 
         self.bert = BertModel(config)
         classifier_dropout = (
@@ -1950,7 +1950,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
         """
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
-        level_mess = self.bert(
+        outputs = self.bert(
             input_ids,
             attention_mask=attention_mask,
             token_type_ids=token_type_ids,
@@ -1962,7 +1962,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
             return_dict=return_dict,
         )
 
-        pooled_output = level_mess[1]
+        pooled_output = outputs[1]
 
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
@@ -1993,28 +1993,31 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":
-                
-
 
                 # no sigmoid
-                # 1.8 1loss logits
+                # 1.11 1loss logits double R12
                 constr_output = get_constr_out(logits, self.R12)
                 train_output = labels*logits.double()
                 train_output = get_constr_out(train_output, self.R12)
-                level_mess = (1 - labels) * constr_output.double() + labels * train_output
+                S2P_mess = (1 - labels) * constr_output.double() + labels * train_output
+
+                constr_output = get_constr_out(logits, self.R12_)
+                train_output = labels*logits.double()
+                train_output = get_constr_out(train_output, self.R12_)
+                P2S_mess = (1 - labels) * constr_output.double() + labels * train_output
 
                 if self.training:
                     # 此处可加权~
                     loss_fct = BCEWithLogitsLoss()
-                    loss = loss_fct(0.99*logits.double() + 0.01*level_mess.double(),labels.double())
+                    loss = loss_fct(P2S_mess.double() + S2P_mess.double(),labels.double())
                     # loss = loss_fct(logits.double(),labels.double())
-                    outputs_ = torch.sigmoid((0.1*level_mess+0.9*logits).double())
+                    outputs_ = torch.sigmoid((S2P_mess+P2S_mess).double())
 
                     return {'loss': loss, 'outputs': outputs_}
 
                 else:
                     # outputs_ = sigmoid_output
-                    outputs_ = torch.sigmoid((0.1*level_mess + 0.9*logits).double())
+                    outputs_ = torch.sigmoid((S2P_mess + P2S_mess).double())
                     return {'outputs': outputs_}
                 
                 # after sigmoid
