@@ -2009,15 +2009,16 @@ class BertForSequenceClassification(BertPreTrainedModel):
                 if self.training:
                     # 此处可加权~
                     loss_fct = BCEWithLogitsLoss()
-                    loss = loss_fct(P2S_mess.double() + S2P_mess.double(),labels.double())
+                    loss = loss_fct(0.9 * logits.double() + 0.1 * P2S_mess.double() ,#+ 0.1 * S2P_mess.double(),
+                                    labels.double())
                     # loss = loss_fct(logits.double(),labels.double())
-                    outputs_ = torch.sigmoid((S2P_mess+P2S_mess).double())
+                    outputs_ = torch.sigmoid(0.8 * logits.double() + 0.1 * P2S_mess.double() + 0.1 * S2P_mess.double())
 
                     return {'loss': loss, 'outputs': outputs_}
 
                 else:
                     # outputs_ = sigmoid_output
-                    outputs_ = torch.sigmoid((S2P_mess + P2S_mess).double())
+                    outputs_ = torch.sigmoid(0.8 * logits.double() + 0.1 * P2S_mess.double() + 0.1 * S2P_mess.double())
                     return {'outputs': outputs_}
                 
                 # after sigmoid
