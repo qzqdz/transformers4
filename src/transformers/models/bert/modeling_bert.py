@@ -1910,9 +1910,11 @@ class BertForSequenceClassification(BertPreTrainedModel):
         self.config = config
         with open(os.path.join(LABEL_PATH, 'R123.txt'), 'r', encoding='utf-8') as f:
             R123 = eval(f.read())
+        with open(os.path.join(LABEL_PATH, 'multi_label_node.txt'), 'r', encoding='utf-8') as f:
+            multi_label_node = eval(f.read())
         self.R123 = torch.tensor(R123,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
         self.R123_ = torch.tensor(R123, device='cuda' if torch.cuda.is_available() else 'cpu')
-
+        self.multi_label_node = multi_label_node
         self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
 
         self.bert = BertModel(config)
@@ -2001,6 +2003,8 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
                 # no sigmoid
                 # 1loss logits double R123
+
+
                 constr_output = get_constr_out(logits, self.R123)
                 train_output = labels*logits.double()
                 train_output = get_constr_out(train_output, self.R123)
