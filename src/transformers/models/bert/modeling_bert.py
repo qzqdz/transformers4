@@ -1899,7 +1899,7 @@ def get_constr_out(x, R):
 @add_start_docstrings(
     """
     this bert model is modified.
-    hm12 classificaion
+    hm123 classificaion
     """,
     BERT_START_DOCSTRING,
 )
@@ -1908,10 +1908,10 @@ class BertForSequenceClassification(BertPreTrainedModel):
         super().__init__(config)
         self.num_labels = config.num_labels
         self.config = config
-        with open(os.path.join(LABEL_PATH, 'R12.txt'), 'r', encoding='utf-8') as f:
-            R12 = eval(f.read())
-        self.R12 = torch.tensor(R12,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
-        self.R12_ = torch.tensor(R12, device='cuda' if torch.cuda.is_available() else 'cpu')
+        with open(os.path.join(LABEL_PATH, 'R123.txt'), 'r', encoding='utf-8') as f:
+            R123 = eval(f.read())
+        self.R123 = torch.tensor(R123,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
+        self.R123_ = torch.tensor(R123, device='cuda' if torch.cuda.is_available() else 'cpu')
 
         self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
 
@@ -2000,15 +2000,15 @@ class BertForSequenceClassification(BertPreTrainedModel):
             elif self.config.problem_type == "multi_label_classification":
 
                 # no sigmoid
-                # 1.11 1loss logits double R12
-                constr_output = get_constr_out(logits, self.R12)
+                # 1loss logits double R123
+                constr_output = get_constr_out(logits, self.R123)
                 train_output = labels*logits.double()
-                train_output = get_constr_out(train_output, self.R12)
+                train_output = get_constr_out(train_output, self.R123)
                 S2P_mess = (1 - labels) * constr_output.double() + labels * train_output
 
-                constr_output = get_constr_out(logits, self.R12_)
+                constr_output = get_constr_out(logits, self.R123_)
                 train_output = labels*logits.double()
-                train_output = get_constr_out(train_output, self.R12_)
+                train_output = get_constr_out(train_output, self.R123_)
                 P2S_mess = (1 - labels) * constr_output.double() + labels * train_output
 
 

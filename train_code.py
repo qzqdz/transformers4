@@ -400,11 +400,15 @@ berthm12_lr20_bs8_512_lv12_1_20
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_512_lv12_1_20   --checkpointing_steps 2000
 
 
+berthm123_lr20_bs8_512_lv123
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm123_lr20_bs8_512_lv123   --checkpointing_steps 2000
+
+
 
 hm12 debug
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_test   --checkpointing_steps 2
 
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_test   --checkpointing_steps 2
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256   --do_train True  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm123_lr20_bs8_512_lv123   --checkpointing_steps 2
 
 
 '''
@@ -629,6 +633,13 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_
 berthm_lr20_bs8_256_lv12_1_11
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/bert_base_uncased    --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5_hm12.py  --do_train True  --learning_rate 2e-5  --report_to wandb   --with_tracking   --train_mode hm12   --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/berthm_lr20_bs8_256_lv12_1_11/  --checkpointing_steps 2000
 
+berthm12_lr20_bs8_512_lv12_1_22
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/bert_base_uncased    --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5_hm12.py  --do_train True  --learning_rate 2e-5  --report_to wandb   --with_tracking   --train_mode hm12   --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/berthm_lr20_bs8_256_lv12_1_22/  --checkpointing_steps 2000
+
+
+berthm123_lr40_bs16_512_lv123
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/bert_base_uncased    --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5_hm123.py  --do_train True  --learning_rate 4e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 16   --per_device_eval_batch_size 16    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/berthm123_lr40_bs16_512_lv123/  --checkpointing_steps 2000
+
 
 '''
 
@@ -654,6 +665,10 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 
 berthm12_lr20_bs16_512_lv12_1_19
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/bert_nucased     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm12.py   --max_length 512   --do_train True    --report_to wandb --with_tracking  --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/berthm12_lr20_bs16_512_lv12_1_19   --checkpointing_steps 2000
+
+
+berthm123_lr40_bs16_512_lv123
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/bert_nucased     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123.py   --max_length 512   --do_train True    --report_to wandb --with_tracking  --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/berthm123_lr40_bs16_512_lv123   --checkpointing_steps 2000
 
 
 '''
@@ -750,26 +765,37 @@ hm 1.13版本
 计算loss的时候，考虑层级关系(双矩阵)，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：8 1 1
 进行预测的时候，考虑实际的预测结果权
 
-hm 1.14版本
+hm 1.14版本 x
 使用logits，而不是sigmoid
 计算loss的时候，考虑层级关系(双矩阵)，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：9 0 1
 进行预测的时候，考虑实际的预测结果权 8 1 1
 
 
-hm 1.15版本
+hm 1.15版本 x
 计算loss的时候，考虑层级关系(双矩阵)，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：8 0 2
 进行预测的时候，考虑实际的预测结果权 9 1 0
 
-hm 1.16版本
+hm 1.16版本 微弱效果
 计算loss的时候，考虑实际标签的预测，基于一个loss函数进行实现
 进行预测的时候，考虑实际的预测结果权 8 1 1
 
-hm 1.17版本
+hm 1.17版本 x
 rdrop 计算lv12信息
 
 hm 1.18版本 512
-1.14
+1.12
 
+hm 1.20版本 512 
+计算loss的时候，考虑层级关系(双矩阵)，也考虑实际标签的预测，但基于一个loss函数进行实现，使用mlp收束
+进行预测的时候，考虑实际的预测结果权，使用mlp收束
 
+hm 1.21版本 512 
+lv12 原版
+
+hm 1.22版本 256 
+20 256版本
+
+hm 1.23版本 512
+lv123 
 
 '''
