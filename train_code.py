@@ -383,11 +383,28 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 berthm12_lr20_bs8_256_lv12_1_14
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_1_14   --checkpointing_steps 2000
 
+berthm12_lr20_bs8_256_lv12_1_15
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_1_15   --checkpointing_steps 2000
+
+berthm12_lr20_bs8_256_lv12_1_16
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_1_16   --checkpointing_steps 2000
+
+
+berthm12_lr20_bs8_256_lv12_1_17
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True    --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_1_17   --checkpointing_steps 2000
+
+berthm12_lr20_bs8_512_lv12_1_18
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_512_lv12_1_18   --checkpointing_steps 2000
+
+berthm12_lr20_bs8_512_lv12_1_20
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_512_lv12_1_20   --checkpointing_steps 2000
+
+
 
 hm12 debug
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_test   --checkpointing_steps 2
 
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/bertbase_lr20_bs8_256_lv12_test   --checkpointing_steps 2
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_test   --checkpointing_steps 2
 
 
 '''
@@ -625,6 +642,22 @@ CUDA_LAUNCH_BLOCKING=1 python ./examples/pytorch/text-classification/run_glue_no
 
 '''
 
+
+
+'''
+gyj cp5 
+
+
+berthm12_lr20_bs16_512_lv12_1_17
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/bert_nucased     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm12.py   --max_length 512   --do_train True    --report_to wandb --with_tracking  --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/berthm12_lr20_bs16_512_lv12_1_17   --checkpointing_steps 2000
+
+
+berthm12_lr20_bs16_512_lv12_1_19
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/bert_nucased     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm12.py   --max_length 512   --do_train True    --report_to wandb --with_tracking  --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/berthm12_lr20_bs16_512_lv12_1_19   --checkpointing_steps 2000
+
+
+'''
+
 # import torch
 # if hasattr(torch.cuda, 'empty_cache'):
 # 	torch.cuda.empty_cache()
@@ -692,7 +725,7 @@ hm 1.8版本
 
 hm 1.9版本 
 使用logits，而不是sigmoid
-计算loss的时候，考虑层级关系，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：原0.99+层级*0.1
+计算loss的时候，考虑层级关系，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：原0.99+层级*0.01
 进行预测的时候，既包含层级关系，也包含实际的预测结果权(重关系：原0.9+层级*0.1)
 
 
@@ -719,8 +752,24 @@ hm 1.13版本
 
 hm 1.14版本
 使用logits，而不是sigmoid
-计算loss的时候，考虑层级关系(双矩阵)，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：9  1
+计算loss的时候，考虑层级关系(双矩阵)，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：9 0 1
 进行预测的时候，考虑实际的预测结果权 8 1 1
+
+
+hm 1.15版本
+计算loss的时候，考虑层级关系(双矩阵)，也考虑实际标签的预测，但基于一个loss函数进行实现，权重关系：8 0 2
+进行预测的时候，考虑实际的预测结果权 9 1 0
+
+hm 1.16版本
+计算loss的时候，考虑实际标签的预测，基于一个loss函数进行实现
+进行预测的时候，考虑实际的预测结果权 8 1 1
+
+hm 1.17版本
+rdrop 计算lv12信息
+
+hm 1.18版本 512
+1.14
+
 
 
 '''

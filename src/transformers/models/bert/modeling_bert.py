@@ -62,8 +62,11 @@ elif os.path.exists('/home/ydc/data/nlpcct5'):
     FILE_PATH = os.path.abspath('/home/ydc/data/nlpcct5')
 elif os.path.exists('/opt/data/yanyu/data/nlpcct5'):
     FILE_PATH = os.path.abspath('/opt/data/yanyu/data/nlpcct5')
+elif os.path.exists('C:/Users/Administrator/Desktop/yindechun/data/nlpcct5'):
+    FILE_PATH = os.path.abspath('C:/Users/Administrator/Desktop/yindechun/data/nlpcct5')
 else:
     FILE_PATH = os.path.abspath(r'D:\data\nlpcct5')
+
 LABEL_PATH = os.path.join(FILE_PATH,'label_dir')
 
 
@@ -1816,7 +1819,7 @@ class BertForSequenceClassification2(BertPreTrainedModel):
                     self.config.problem_type = "single_label_classification"
                 else:
                     self.config.problem_type = "multi_label_classification"
-        alpha_ = 100.0
+        alpha_ = 1.0
         for logits in logits_lst:
             if self.config.problem_type == "regression":
                 loss_fct = MSELoss()
@@ -1909,6 +1912,8 @@ class BertForSequenceClassification(BertPreTrainedModel):
             R12 = eval(f.read())
         self.R12 = torch.tensor(R12,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
         self.R12_ = torch.tensor(R12, device='cuda' if torch.cuda.is_available() else 'cpu')
+
+        self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
 
         self.bert = BertModel(config)
         classifier_dropout = (
@@ -2006,19 +2011,31 @@ class BertForSequenceClassification(BertPreTrainedModel):
                 train_output = get_constr_out(train_output, self.R12_)
                 P2S_mess = (1 - labels) * constr_output.double() + labels * train_output
 
+
+
+                c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
+                l_output = self.mlp(c_logit)
+
+
                 if self.training:
                     # 此处可加权~
                     loss_fct = BCEWithLogitsLoss()
-                    loss = loss_fct(0.9 * logits.double() + 0.1 * P2S_mess.double() ,#+ 0.1 * S2P_mess.double(),
-                                    labels.double())
+                    # loss = loss_fct(1 * logits.double() ,#+  P2S_mess.double() ,#+ 0.1 * S2P_mess.double(),
+                    #                 labels.double())
                     # loss = loss_fct(logits.double(),labels.double())
-                    outputs_ = torch.sigmoid(0.8 * logits.double() + 0.1 * P2S_mess.double() + 0.1 * S2P_mess.double())
+                    # outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * S2P_mess.double() + 0.01 * P2S_mess.double())
+
+                    loss = loss_fct(l_output.double(),labels.double())
+                    outputs_ = torch.sigmoid(l_output.double())
+
 
                     return {'loss': loss, 'outputs': outputs_}
 
                 else:
                     # outputs_ = sigmoid_output
-                    outputs_ = torch.sigmoid(0.8 * logits.double() + 0.1 * P2S_mess.double() + 0.1 * S2P_mess.double())
+                    # outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
+
+                    outputs_ = torch.sigmoid(l_output.double())
                     return {'outputs': outputs_}
                 
                 # after sigmoid
