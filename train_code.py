@@ -403,8 +403,12 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 berthm123_lr20_bs8_512_lv123
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm123_lr20_bs8_512_lv123   --checkpointing_steps 2000
 
-sciberthm123_lr20_bs8_256_lv123 1.0版本
+sciberthm123_lr20_bs8_256_lv123_1 1.0版本
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_lr20_bs8_512_lv123   --checkpointing_steps 2000
+
+
+scibert123_lr20_bs8_256_lv123_1_3
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256   --do_train True  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_3   --checkpointing_steps 2000
 
 
 
@@ -644,6 +648,14 @@ berthm123_lr20_bs8_256_lv123
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/bert_base_uncased    --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5_hm123.py  --do_train True  --learning_rate 2e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/berthm123_lr20_bs8_256_lv123/  --checkpointing_steps 2000
 
 
+sciberthm123_lr20_bs8_256_lv123 1.3
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/scibert    --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5_hm123.py  --do_train True  --learning_rate 2e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/sciberthm123_lr20_bs8_256_lv123/  --checkpointing_steps 2000
+
+
+berthm123_lr20_bs8_256_lv123 1.4
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/bert_base_uncased    --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5_hm123.py  --do_train True  --train_mode hm12  --learning_rate 2e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/berthm123_lr20_bs8_256_lv123/  --checkpointing_steps 2000
+
+
 '''
 
 
@@ -810,15 +822,22 @@ hm 1.23版本 512
 lv123 
 
 hm123 1.0 版本 256
-基于hm 1.22
+基于hm 1.22 使用scibert
 
 hm123 1.1版本 256
 基于原版bert，直接预测lv123
+{'suset_accuracy': 0.0, 'accuracy': 0.35582431254384084, 'precision': 0.5887274899120487, 'recall': 0.46449007185103075, 'f1': 0.5113932972769322, 'micro-precision': 0.5835800574849264, 'micro-recall': 0.46040270744889433, 'micro-f1': 0.5147246630958962, 'threshold': 0.27}
+
  
 hm123 1.2版本 512
 基于原版bert，直接预测lv123
 
 hm123 1.3版本 256
 基于scibert，直接预测lv123
+
+hm123 1.4版本 256
+基于hm 1.22 使用bert
+
+
 
 '''

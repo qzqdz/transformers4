@@ -73,7 +73,9 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 # DEVICE = 'cpu'
 
 # c1
-DATA_PATH = r'E:\data\nlpcct5\nlpcct5.py'
+# DATA_PATH = r'E:\data\nlpcct5\nlpcct5.py'
+DATA_PATH = r'E:\data\nlpcct5\nlpcct5_hm123.py'
+
 # MODEL_PATH = r'E:\model\transformers4\bertbase_lr20_bs8_256_lv1_1'
 # MODEL_PATH = r'E:\model\transformers4\bertflbce_lr20_bs8_256_lv1'
 # MODEL_PATH = r'E:\model\transformers4\bertfl_lr20_bs8_256_lv1'
@@ -82,8 +84,8 @@ DATA_PATH = r'E:\data\nlpcct5\nlpcct5.py'
 # MODEL_PATH=r'E:\model\transformers4\bert_for_test\output_dir'
 # MODEL_PATH=r'E:\model\transformers4\bertsimcse_lr20_bs8_256_lv1_1'
 # MODEL_PATH=r'E:\model\transformers4\simcse_sup_bertbase_lr20_bs8_256'
-MODEL_PATH=r'E:\model\transformers4\simcse_sup_bertbase_lr20_bs8_256'
-
+# MODEL_PATH=r'E:\model\transformers4\simcse_sup_bertbase_lr20_bs8_256'
+MODEL_PATH=r'E:\model\transformers4\sciberthm123_lr20_bs8_256_lv123_1'
 # c2
 
 if not os.path.exists(os.path.join(MODEL_PATH, 'eval_res')):
@@ -97,9 +99,9 @@ per_device_eval_batch_size = 8
 
 task = 'log'
 
-def log_into_file(processed_datasets,label_list,num_labels,model):
+def log_into_file(processed_datasets,label_list,num_labels,model,door=None):
     df = pd.DataFrame(columns=['title','predictions','references'])
-
+    # model.device = DEVICE
     pred_lst = []
     label_lst = []
     title_lst = []
@@ -112,8 +114,19 @@ def log_into_file(processed_datasets,label_list,num_labels,model):
                  'attention_mask': torch.tensor(data['attention_mask']).reshape(1, txt_len),
                  'labels': torch.tensor(data['labels']).reshape(1, num_labels)}
 
-        outputs = model(**input).logits.tolist()
-        pred_lst.append(outputs[0])
+        # outputs = model(**input).logits.tolist()
+        # pred_lst.append(outputs[0])
+
+        outputs = model(**input)['outputs'].tolist()
+
+        if door is not None:
+            pred_lst.append((np.greater(outputs,door).astype(np.int32)).tolist()[0])
+            # print(pred_lst)
+            # print(len(pred_lst))
+            # print(len(pred_lst[0]))
+
+        else:
+            pred_lst.append(outputs)
         label_lst.append(input['labels'].type(torch.int).tolist()[0])
         title_lst.append(data['title'])
         df.loc[step, 'title'] = title_lst[-1]
@@ -229,7 +242,7 @@ def main():
 
     if task=='log':
         model = model_init()
-        log_into_file(processed_datasets, label_list, num_labels, model)
+        log_into_file(processed_datasets, label_list, num_labels, model)#,door=0.25)
         return
 
     if task=='test':
