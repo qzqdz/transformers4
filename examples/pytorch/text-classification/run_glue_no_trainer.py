@@ -269,11 +269,15 @@ class multicheck:
         multilabel = type(label.tolist()[0]) is list
 
         if predictions_ is not None:
-            predictions = np.array(predictions_.cpu().numpy())
+            if type(predictions_) is not list:
+                predictions = np.array(predictions_.cpu().numpy())
+            else:
+                predictions = predictions_
         else:
             predictions = np.array([p.cpu().numpy() for p in self.predictions])
 
         if multilabel:
+
             # print(label[0],predictions[0])
             self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
             self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
@@ -379,6 +383,9 @@ def main():
     elif args.train_file.split('.')[-1]=='py':
         if 'reuters21578' in args.train_file:
             raw_datasets = load_dataset(args.train_file,'ModHayes')
+
+        elif 'web_of_science' in args.train_file:
+            raw_datasets = load_dataset(args.train_file, 'WOS46985')
         else:
             raw_datasets = load_dataset(args.train_file)
     else:
@@ -636,14 +643,13 @@ def main():
         )
 
     train_dataset = processed_datasets["train"]
-
     eval_dataset = processed_datasets["validation_matched" if args.task_name == "mnli" else "validation"]
 
 
     if args.child_tune:
         train_dataset = train_dataset.select(range(3000))
         eval_dataset = eval_dataset.select(range(500))
-    # eval_dataset = eval_dataset.select(range(2))
+    eval_dataset = eval_dataset.select(range(2))
     # Log a few random samples from the training set:
     for index in random.sample(range(len(train_dataset)), 3):
         logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
@@ -1221,27 +1227,46 @@ def main():
                                     # print(metric.references[-1])
                                     # print('debug references!')
 
-                                best_th = 0.5
-                                default_th = 0.4
-                                best_dir = {}
-                                thresholds = (np.array(range(-20, 20)) / 100) + default_th
-                                best_f1 = 0
-                                metric.predictions = torch.tensor(metric.predictions,
-                                                                  device='cuda' if torch.cuda.is_available() else 'cpu')
-
-                                for threshold in thresholds:
-                                    metric.eval_metric = {}
-                                    predictions = torch.ge(metric.predictions,threshold).type(torch.int)
-                                    # print(predictions)
+                                if 'wos' in args.train_file:
+                                    predictions = []
+                                    lv1_mask = np.array([1] * 7 + [0] * (num_labels - 7))
+                                    lv2_mask = (lv1_mask + 1) % 2
+                                    for pred in metric.predictions:
+                                        pred_ = np.array(pred)
+                                        lv1_pred = np.argmax(lv1_mask * pred_)
+                                        lv2_pred = np.argmax(lv2_mask * pred_)
+                                        res = num_labels * [0]
+                                        res[lv1_pred] = 1
+                                        res[lv2_pred] = 1
+                                        predictions.append(res)
+                                    # metric.predictions = predictions
                                     metric.check(predictions)
-                                    if metric.eval_metric['f1']>best_f1:
-                                        best_f1 = metric.eval_metric['f1']
-                                        best_dir = metric.eval_metric
-                                        best_th = threshold
-                                if best_dir:
-                                    metric.eval_metric = best_dir
-                                logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
-                                metric.eval_metric['threshold'] = best_th
+                                    logger.info(f"best checkpoint:{metric.eval_metric}")
+                                else:
+                                    best_th = 0.5
+                                    default_th = 0.4
+                                    best_dir = {}
+                                    thresholds = (np.array(range(-20, 20)) / 100) + default_th
+                                    best_f1 = 0
+                                    metric.predictions = torch.tensor(metric.predictions,
+                                                                      device='cuda' if torch.cuda.is_available() else 'cpu')
+
+                                    for threshold in thresholds:
+                                        metric.eval_metric = {}
+                                        predictions = torch.ge(metric.predictions,threshold).type(torch.int)
+                                        # print(predictions)
+                                        metric.check(predictions)
+                                        if metric.eval_metric['f1']>best_f1:
+                                            best_f1 = metric.eval_metric['f1']
+                                            best_dir = metric.eval_metric
+                                            best_th = threshold
+                                    if best_dir:
+                                        metric.eval_metric = best_dir
+                                    logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
+                                    metric.eval_metric['threshold'] = best_th
+
+
+
 
                                 if args.with_tracking:
                                     accelerator.log(
@@ -1278,25 +1303,45 @@ def main():
 
 
                     if len(label_list) > 2:
-                        default_th = 0.5
-                        best_th = 0.5
-                        best_dir = {}
-                        thresholds = (np.array(range(-20, 20)) / 100) + default_th
-                        best_f1 = 0
-                        metric.predictions = torch.tensor(metric.predictions,
-                                                          device='cuda' if torch.cuda.is_available() else 'cpu')
-                        for threshold in thresholds:
-                            metric.eval_metric = {}
-                            predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+
+                        if 'wos' in args.train_file:
+                            predictions = []
+                            lv1_mask = np.array([1] * 7 + [0] * (num_labels - 7))
+                            lv2_mask = (lv1_mask + 1) % 2
+                            for pred in metric.predictions:
+                                pred_ = np.array(pred)
+                                lv1_pred = np.argmax(lv1_mask * pred_)
+                                lv2_pred = np.argmax(lv2_mask * pred_)
+                                res = num_labels * [0]
+                                res[lv1_pred] = 1
+                                res[lv2_pred] = 1
+                                predictions.append(res)
+                            # metric.predictions = predictions
                             metric.check(predictions)
-                            if metric.eval_metric['f1'] > best_f1:
-                                best_f1 = metric.eval_metric['f1']
-                                best_dir = metric.eval_metric
-                                best_th = threshold
-                        if best_dir:
-                            metric.eval_metric = best_dir
-                        logger.info(f"epoch {epoch}: {metric.eval_metric};best_th:{best_th}")
-                        metric.eval_metric['threshold'] = best_th
+                            logger.info(f"best checkpoint:{metric.eval_metric}")
+                        else:
+                            best_th = 0.5
+                            default_th = 0.4
+                            best_dir = {}
+                            thresholds = (np.array(range(-20, 20)) / 100) + default_th
+                            best_f1 = 0
+                            metric.predictions = torch.tensor(metric.predictions,
+                                                              device='cuda' if torch.cuda.is_available() else 'cpu')
+
+                            for threshold in thresholds:
+                                metric.eval_metric = {}
+                                predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+                                # print(predictions)
+                                metric.check(predictions)
+                                if metric.eval_metric['f1'] > best_f1:
+                                    best_f1 = metric.eval_metric['f1']
+                                    best_dir = metric.eval_metric
+                                    best_th = threshold
+                            if best_dir:
+                                metric.eval_metric = best_dir
+                            logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
+                            metric.eval_metric['threshold'] = best_th
+
                     else:
                         metric.eval_metric = {}
                         metric.check()
@@ -1615,25 +1660,46 @@ def main():
                 metric.references.extend(batch["labels"])
 
         if len(label_list) > 2:
-            best_th = 0.5
-            default_th = 0.4
-            best_dir = {}
-            thresholds = (np.array(range(-20, 30)) / 100) + default_th
-            best_f1 = 0
-            metric.predictions = torch.tensor(metric.predictions,
-                                              device='cuda' if torch.cuda.is_available() else 'cpu')
-            for threshold in thresholds:
-                metric.eval_metric = {}
-                predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+
+            if 'wos' in args.train_file:
+                predictions = []
+                lv1_mask = np.array([1] * 7 + [0] * (num_labels - 7))
+                lv2_mask = (lv1_mask + 1) % 2
+                for pred in metric.predictions:
+                    pred_ = np.array(pred)
+                    lv1_pred = np.argmax(lv1_mask * pred_)
+                    lv2_pred = np.argmax(lv2_mask * pred_)
+                    res = num_labels * [0]
+                    res[lv1_pred] = 1
+                    res[lv2_pred] = 1
+                    predictions.append(res)
+                # metric.predictions = predictions
                 metric.check(predictions)
-                if metric.eval_metric['micro-f1'] > best_f1:
-                    best_f1 = metric.eval_metric['micro-f1']
-                    best_dir = metric.eval_metric
-                    best_th = threshold
-            if best_dir:
-                metric.eval_metric = best_dir
-            logger.info(f"best eval_res:{metric.eval_metric};threshold:{best_th}")
-            metric.eval_metric['threshold'] = best_th
+                logger.info(f"best checkpoint:{metric.eval_metric}")
+            else:
+                best_th = 0.5
+                default_th = 0.4
+                best_dir = {}
+                thresholds = (np.array(range(-20, 20)) / 100) + default_th
+                best_f1 = 0
+                metric.predictions = torch.tensor(metric.predictions,
+                                                  device='cuda' if torch.cuda.is_available() else 'cpu')
+
+                for threshold in thresholds:
+                    metric.eval_metric = {}
+                    predictions = torch.ge(metric.predictions, threshold).type(torch.int)
+                    # print(predictions)
+                    metric.check(predictions)
+                    if metric.eval_metric['f1'] > best_f1:
+                        best_f1 = metric.eval_metric['f1']
+                        best_dir = metric.eval_metric
+                        best_th = threshold
+                if best_dir:
+                    metric.eval_metric = best_dir
+                logger.info(f"best checkpoint:{metric.eval_metric};threshold:{best_th}")
+                metric.eval_metric['threshold'] = best_th
+
+
 
         else:
             metric.eval_metric = {}
