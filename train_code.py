@@ -669,6 +669,18 @@ sciberthm123_lr20_bs8_256_lv123_1_6 1.6
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/scibert    --train_file /opt/data/yanyu//data/nlpcct5/nlpcct5_hm123.py  --do_train True  --train_mode hm12  --learning_rate 2e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/sciberthm123_lr20_bs8_256_lv123_1_6/  --checkpointing_steps 2000
 
 
+
+sciberthm12_lr20_bs8_256_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/scibert    --train_file /opt/data/yanyu//data/wos/wos.py  --do_train True  --train_mode hm12  --learning_rate 2e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/sciberthm12_lr20_bs8_256_wos/  --checkpointing_steps 1000
+
+bertbasehm12_lr20_bs8_256_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/bert_base_uncased    --train_file /opt/data/yanyu//data/wos/wos.py  --do_train True  --train_mode hm12  --learning_rate 2e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/bertbasehm12_lr20_bs8_256_wos/  --checkpointing_steps 1000
+
+
+
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/model/transformers4/sciberthm12_lr20_bs8_256_wos    --train_file /opt/data/yanyu//data/wos/wos.py  --train_mode hm12  --learning_rate 2e-5    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/sciberthm12_lr20_bs8_256_wos/  --checkpointing_steps 1000
+
+
 '''
 
 
