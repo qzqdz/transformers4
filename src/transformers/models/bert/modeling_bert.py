@@ -2499,12 +2499,19 @@ class BertForSequenceClassification(BertPreTrainedModel):
         self.R12_ = torch.tensor(R12, device='cuda' if torch.cuda.is_available() else 'cpu')
 
         self.bert = BertModel(config)
+        self.bert1 = BertModel(config)
+
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
         )
+
         self.dropout = nn.Dropout(classifier_dropout)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
-        self.mlp = torch.nn.Linear(self.num_labels * 3, self.num_labels,
+
+        self.dropout1 = nn.Dropout(classifier_dropout)
+        self.classifier1 = nn.Linear(config.hidden_size, config.num_labels)
+
+        self.mlp = torch.nn.Linear(self.num_labels * 2, self.num_labels,
                                    device='cuda' if torch.cuda.is_available() else 'cpu', dtype=torch.double)
 
         # Initialize weights and apply final processing
@@ -2553,9 +2560,24 @@ class BertForSequenceClassification(BertPreTrainedModel):
         )
 
         pooled_output = outputs[1]
-
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
+
+        outputs1 = self.bert(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        pooled_output1 = outputs1[1]
+        pooled_output1 = self.dropout1(pooled_output1)
+        logits1 = self.classifier1(pooled_output1)
 
         loss = None
         if labels is not None:
@@ -2591,12 +2613,13 @@ class BertForSequenceClassification(BertPreTrainedModel):
                 train_output = get_constr_out(train_output, self.R12)
                 S2P_mess = (1 - labels) * constr_output.double() + labels * train_output
 
-                constr_output = get_constr_out(logits, self.R12_)
-                train_output = labels * logits.double()
-                train_output = get_constr_out(train_output, self.R12_)
-                P2S_mess = (1 - labels) * constr_output.double() + labels * train_output
 
-                c_logit = torch.concat((logits, P2S_mess, S2P_mess), -1)
+                constr_output1 = get_constr_out(logits1, self.R12_)
+                train_output1 = labels * logits.double()
+                train_output1 = get_constr_out(train_output1, self.R12_)
+                P2S_mess = (1 - labels) * constr_output1.double() + labels * train_output1
+
+                c_logit = torch.concat((P2S_mess, S2P_mess), -1)
                 l_output = self.mlp(c_logit)
 
                 if self.training:
