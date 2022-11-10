@@ -287,13 +287,13 @@ def simcse_sup_loss(y_pred,label,temp=0.05):
     for i in range(batch_len):
         one_sim_lst = []
         for j in range(batch_len):
-
             if label[i].equal(label[j]):
                 one_sim_lst.append(1)
             else:
                 one_sim_lst.append(0)
         one_sim_lst[i]=0
         y_true.append(one_sim_lst)
+        # print(y_true)
     y_true = torch.tensor(y_true,device=DEVICE).type(torch.float)
 
 

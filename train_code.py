@@ -415,8 +415,37 @@ scibert123_lr20_bs8_256_lv123_1_7
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_7   --checkpointing_steps 2000
 
 
+
 sciberthm12_lr20_bs8_256_wos_test
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm12_lr20_bs8_256_wos_test   --checkpointing_steps 2
+
+sciberthm12_lr20_bs8_256_wos_simcse_sup_test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos/wos_rand_sim_together.py   --max_length 256   --do_train True --train_mode simcse_sup   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm12_lr20_bs8_256_wos_simcse_sup_test   --checkpointing_steps 2
+
+
+scibert123_lr20_bs8_256_lv123_1_8_simcse_base
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos/wos_rand_sim_together.py   --max_length 256   --do_train True --train_mode simcse_sup   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_8_simcse_base   --checkpointing_steps 1000
+
+scibert123_lr20_bs8_256_lv123_1_10_simcse_base
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos/wos_rand_sim_together.py   --max_length 256   --do_train True --train_mode simcse_sup   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 1   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_10_simcse_base   --checkpointing_steps 1000
+
+
+
+scibert123_lr20_bs8_256_lv123_1_8
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_8_simcse_base/step_4000     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_8   --checkpointing_steps 1000
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_8     --train_file E:/data/wos/wos.py   --max_length 256   --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_8   --checkpointing_steps 1000
+
+
+scibert123_lr20_bs8_256_lv123_1_9_simcse_base
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos/wos_rand_sim_together.py   --max_length 256   --do_train True --train_mode simcse_sup   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_9_simcse_base   --checkpointing_steps 1000
+
+scibert123_lr20_bs8_256_lv123_1_9
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_9_simcse_base/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_9   --checkpointing_steps 1000 --ignore_mismatched_sizes
+
+
+scibert123_lr20_bs8_256_lv123_1_10
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_8_simcse_base/step_4000     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_10   --checkpointing_steps 1000  --ignore_mismatched_sizes
 
 
 
@@ -570,12 +599,43 @@ zhihu_simcse_3 1ep 0.05 flavg
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_chinese     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True  --train_mode simcse  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 1e-5     --num_train_epochs 1   --output_dir D:/model/transformers4/zhihu_simcse_bert_3   --checkpointing_steps 501
 
 
+# simcse_sup
+zhihu_simcse_sup_1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/chinesebert     --train_file E:\data\zhihu\zhihu_rand_sim_together.py   --max_length 128   --do_train True  --train_mode simcse_sup  --per_device_eval_batch_size 32  --per_device_train_batch_size 32  --learning_rate 8e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/zhihu_simcse_sup_1   --checkpointing_steps 378
+
+zhihu_simcse_sup_2
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/chinesebert     --train_file E:\data\zhihu\zhihu_rand_sim_together.py   --max_length 128   --do_train True  --train_mode simcse_sup  --per_device_eval_batch_size 32  --per_device_train_batch_size 32  --learning_rate 4e-5     --num_train_epochs 1   --output_dir E:/model/transformers4/zhihu_simcse_sup_2   --checkpointing_steps 378
+
+
+zhihu_bertbase_simcse_sup_lr80_bs32_128
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/zhihu_simcse_sup_1     --train_file E:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 32  --per_device_train_batch_size 32  --learning_rate 8e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/zhihu_bertbase_simcse_sup_lr80_bs32_128   --checkpointing_steps epoch
+
+
+
+zhihu_bertbase_simcse_sup_lr80_bs32_128_1 学习率调整
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/zhihu_simcse_sup_1     --train_file E:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 32  --per_device_train_batch_size 32  --learning_rate 4e-5     --num_train_epochs 1   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_sup_lr80_bs32_128_1   --checkpointing_steps epoch
+{'accuracy': 0.8133802816901409, 'precision': 0.5238095238095238, 'recall': 0.5892857142857143, 'f1': 0.5546218487394958}
+
+zhihu_bertbase_simcse_sup_lr80_bs32_128_2 学习率调整 epoch调整
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/zhihu_simcse_sup_1     --train_file E:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 32  --per_device_train_batch_size 32  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_sup_lr80_bs32_128_2   --checkpointing_steps epoch
+{'accuracy': 0.7992957746478874, 'precision': 0.4878048780487805, 'recall': 0.35714285714285715, 'f1': 0.41237113402061853} 
+
+
+zhihu_bertbase_simcse_sup_lr40_bs32_128_3 simcse_bert2
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/zhihu_simcse_sup_2     --train_file E:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 32  --per_device_train_batch_size 32  --learning_rate 4e-5     --num_train_epochs 1   --output_dir E:/model/transformers4/zhihu_bertbase_simcse_sup_lr40_bs32_128_3   --checkpointing_steps epoch
+
+
+zhihu_bertbase_simcse_sup_lr40_bs32_128_4 
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/chinesebert     --train_file E:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 32  --per_device_train_batch_size 32  --learning_rate 4e-5     --num_train_epochs 1   --output_dir E:/model/transformers4/zhihu_bertbase_simcse_sup_lr40_bs32_128_4   --checkpointing_steps epoch
+
 
 zhihu_bertbase_simcse_lr40_bs16_128
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/zhihu_simcse_bert     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 4e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_lr40_bs16_128   --checkpointing_steps epoch
 
 zhihu_bertbase_simcse_lr80_bs16_128
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/zhihu_simcse_bert     --train_file D:/data/zhihu/zhihu.py   --max_length 128   --do_train True    --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 8e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/zhihu_bertbase_simcse_lr80_bs16_128   --checkpointing_steps epoch
+
+
 
 
 
@@ -721,6 +781,15 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 
 sciberthm123_lr20_bs8_256_lv123_1_5 1.5
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123.py   --max_length 256   --do_train True --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/sciberthm123_lr20_bs8_256_lv123_1_5   --checkpointing_steps 2000
+
+scibertmhm12_lr20_bs8_256_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/scibertmhm12_lr20_bs8_256_wos   --checkpointing_steps 1000
+
+scibertmhm12_lr20_bs8_256_wos_1_1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/scibertmhm12_lr20_bs8_256_wos_1_1   --checkpointing_steps 1000
+
+scibertmhm12_lr20_bs8_256_wos_1_2   多任务
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/scibertmhm12_lr20_bs8_256_wos_1_2   --checkpointing_steps 1000
 
 
 
@@ -885,7 +954,27 @@ hm123 1.7版本 256
 基于hm 1.22 使用scibert
 删去logits
 
+hm123 1.8版本 256
+wos 基于hm 1.22，使用scibert，使用了simcse_sup训练（40epoch）
 
+hm123 1.9版本 256
+wos 基于hm 1.22，使用scibert，使用了simcse_sup训练
+
+hm123 1.10版本 256 simcse 扩量
+wos 基于hm 1.22，使用scibert，使用了simcse_sup训练
+
+
+mhmwos 1.1
+多任务 + s2p p2s 和logits分开
+
+
+hmwos
+
+1 使用scibert 基于1.22
+
+1.1 加入另外一个随机logits
+
+1.2 多任务，正式版
 
 
 

@@ -560,8 +560,20 @@ def main():
                 # texts = ([row[i] for i in range(len(mid_lst1[0])) for row in mid_lst1],[row[i] for i in range(len(mid_lst2[0])) for row in mid_lst2])
                 texts = (mid_lst1,mid_lst2)
         '''
-        if args.train_mode=='simcse_sup':
+
+        if args.train_mode == 'simcse_sup' and 'zhihu' in args.train_file:
+            mid_lst = [*zip(examples[sentence1_key], examples[sentence2_key])]
+            mid_lst_ = []
+            for ml in mid_lst:
+                for i in range(len(ml)):
+                    mid_lst_.append(ml[i])
+            mid_lst = mid_lst_
+            del mid_lst_
+            texts = (mid_lst,)
+
+        elif args.train_mode=='simcse_sup':
             # [(1,1),(2,2)]->[1,1,2,2]
+
             mid_lst1 = [*zip(examples[sentence1_key], examples[sentence3_key])]
             mid_lst1_ = []
             for ml in mid_lst1:
@@ -582,10 +594,17 @@ def main():
 
 
 
+
         result = tokenizer(*texts, padding=padding, max_length=args.max_length, truncation=True,add_special_tokens=True)
 
         if "label" in examples:
-            if label_to_id is not None:
+            if 'zhihu' in args.train_file and 'simcse' in args.train_mode:
+                labels_lst = []
+                for i in range(len(examples['label'])):
+                    labels_lst.append(examples['label'][i])
+                    labels_lst.append(examples['label'][i])
+                result["labels"] = labels_lst
+            elif label_to_id is not None:
                 # Map labels to IDs (not necessary for GLUE tasks)
                 result["labels"] = [label_to_id[l] for l in examples["label"]]
             else:
@@ -611,6 +630,12 @@ def main():
 
 
             if args.train_mode=='simcse' or args.train_mode=='simcse_sup':
+
+                # if 'zhihu' in args.train_file:
+                #     for i in range(batch_length):
+                #         labels_lst.append(examples['label'][i])
+                #         labels_lst.append(examples['label'][i])
+                # else:
                 for i in range(batch_length):
                     row_label = []
                     for lab in label_list:
