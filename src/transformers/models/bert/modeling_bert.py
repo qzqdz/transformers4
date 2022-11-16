@@ -1605,7 +1605,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1905,7 +1905,7 @@ def get_constr_out(x, R):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification3(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1917,7 +1917,7 @@ class BertForSequenceClassification3(BertPreTrainedModel):
         self.R123 = torch.tensor(R123,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
         self.R123_ = torch.tensor(R123, device='cuda' if torch.cuda.is_available() else 'cpu')
         self.multi_label_node = multi_label_node
-        self.mlp = torch.nn.Linear(self.num_labels*2,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
+        self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
 
         self.bert = BertModel(config)
         classifier_dropout = (
@@ -2019,8 +2019,8 @@ class BertForSequenceClassification3(BertPreTrainedModel):
 
 
 
-                # c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
-                c_logit = torch.concat((P2S_mess,S2P_mess),-1)
+                c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
                 l_output = self.mlp(c_logit)
 
 
