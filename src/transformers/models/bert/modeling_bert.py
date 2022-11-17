@@ -2021,6 +2021,9 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
                 c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
                 # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((logits,S2P_mess),-1)
+                # c_logit = torch.concat((logits,P2S_mess),-1)
+
                 l_output = self.mlp(c_logit)
 
 

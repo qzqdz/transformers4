@@ -485,7 +485,35 @@ hm123
 划分val、test、train后的补充实验
 
 sciberthm123_256_1 1 logits p2s s2p
+本机跑的
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_1   --checkpointing_steps 2000
+{'suset_accuracy': 0.0344, 'accuracy': 0.7185015707604954, 'precision': 0.8959101036708391, 'recall': 0.7814792187877482, 'f1': 0.8282785598948129, '
+micro-precision': 0.8902557148392096, 'micro-recall': 0.7822393953836726, 'micro-f1': 0.8327594955059437};threshold:0.36000000000000004
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/sciberthm123_256_1     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256  --threshold 0.36000000000000004  --train_mode hm12   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_1   --checkpointing_steps 2000
+{'suset_accuracy': 0.0184, 'accuracy': 0.6657054094398034, 'precision': 0.8692243099745112, 'recall': 0.7366845261247432, 'f1': 0.7899111500117598, 'micro-precision': 0.8619829598738951, 'micro-recall': 0.
+7365352155899954, 'micro-f1': 0.7943366737151788, 'threshold': 0.36000000000000004}
+----------
+sciberthm123_256_2 2 p2s s2p
+----------
+sciberthm123_256_3 3 logits s2p
+----------
+sciberthm123_256_4 4 logits p2s
+----------
+bertbasehm123_256_5 5 logits p2s s2p
+----------
+bertbasehm123_256_6 6 only
+在顾服务器上跑的
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path  /opt/data/yanyu/white_model/bert_base_uncased    --train_file /opt/data/yanyu/data/nlpcct5/nlpcct5_hm123_t.py  --do_train True  --train_mode hm12  --learning_rate 2e-5  --report_to wandb   --with_tracking    --max_length 256    --per_device_train_batch_size 8   --per_device_eval_batch_size 8    --num_train_epochs 3     --output_dir /opt/data/yanyu/model/transformers4/bertbasehm123_256_6/  --checkpointing_steps 2000
+
+----------
+bertbasehm123_256_6 6 only
+
+
+----------
+
+
 
 
 
