@@ -1917,6 +1917,9 @@ class BertForSequenceClassification(BertPreTrainedModel):
         self.R123 = torch.tensor(R123,device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
         self.R123_ = torch.tensor(R123, device='cuda' if torch.cuda.is_available() else 'cpu')
         self.multi_label_node = multi_label_node
+        # 二层
+        # self.mlp = torch.nn.Linear(self.num_labels*2,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
+        # 三层
         self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
 
         self.bert = BertModel(config)
@@ -2019,34 +2022,50 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
 
 
-                c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
                 # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
                 # c_logit = torch.concat((logits,S2P_mess),-1)
                 # c_logit = torch.concat((logits,P2S_mess),-1)
 
-                l_output = self.mlp(c_logit)
+                # l_output = self.mlp(c_logit)
 
 
 
                 if self.training:
                     # 此处可加权~
-                    loss_fct = BCEWithLogitsLoss()
+                    # no mlp
+                    loss_fct = BCELoss()
                     # loss = loss_fct(1 * logits.double() ,#+  P2S_mess.double() ,#+ 0.1 * S2P_mess.double(),
                     #                 labels.double())
                     # loss = loss_fct(logits.double(),labels.double())
-                    # outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * S2P_mess.double() + 0.01 * P2S_mess.double())
 
-                    loss = loss_fct(l_output.double(),labels.double())
-                    outputs_ = torch.sigmoid(l_output.double())
+                    # no mlp
+                    # outputs_ = torch.sigmoid(0.4 * logits.double() + 0.3 * S2P_mess.double() + 0.3 * P2S_mess.double())
+                    # no mlp 1
+                    outputs_ = torch.sigmoid(
+                        0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
+                    loss = loss_fct(outputs_.double(), labels.double())
 
+                    # mlp
+                    # loss_fct = BCEWithLogitsLoss()
+                    # loss = loss_fct(l_output.double(),labels.double())
+                    # outputs_ = torch.sigmoid(l_output.double())
 
                     return {'loss': loss, 'outputs': outputs_}
 
                 else:
                     # outputs_ = sigmoid_output
-                    # outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
 
-                    outputs_ = torch.sigmoid(l_output.double())
+                    # mlp
+                    # outputs_ = torch.sigmoid(l_output.double())
+
+                    # no mlp
+                    # outputs_ = torch.sigmoid(0.4 * logits.double() + 0.3 * S2P_mess.double() + 0.3 * P2S_mess.double())
+                    # no mlp 1
+                    outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
+
+
+
                     return {'outputs': outputs_}
                 
                 # after sigmoid

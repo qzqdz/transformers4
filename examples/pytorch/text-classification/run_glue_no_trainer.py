@@ -1771,8 +1771,8 @@ def main():
                         predictions = torch.ge(metric.predictions, threshold).type(torch.int)
                         # print(predictions)
                         metric.check(predictions)
-                        if metric.eval_metric['f1'] > best_f1:
-                            best_f1 = metric.eval_metric['f1']
+                        if metric.eval_metric['micro-f1'] > best_f1:
+                            best_f1 = metric.eval_metric['micro-f1']
                             best_dir = metric.eval_metric
                             best_th = threshold
                     if best_dir:
