@@ -420,11 +420,17 @@ def main():
         else:
             num_labels = 1
 
-
+    # 数据读取规则,注册处
     elif 'title' in raw_datasets['train'].column_names and 'abstract' in raw_datasets['train'].column_names:
         label_list = raw_datasets['train'].column_names
         label_list.sort()
         label_list.remove('title')
+        label_list.remove('abstract')
+        num_labels = len(label_list)
+        is_regression=False
+    elif ('title' not in raw_datasets['train'].column_names) and ('abstract' in raw_datasets['train'].column_names):
+        label_list = raw_datasets['train'].column_names
+        label_list.sort()
         label_list.remove('abstract')
         num_labels = len(label_list)
         is_regression=False
@@ -434,6 +440,13 @@ def main():
         label_list.remove('title1')
         label_list.remove('abstract1')
         label_list.remove('title2')
+        label_list.remove('abstract2')
+        num_labels = len(label_list)
+        is_regression=False
+    elif ('title1' not in raw_datasets['train'].column_names) and ('abstract1' in raw_datasets['train'].column_names):
+        label_list = raw_datasets['train'].column_names
+        label_list.sort()
+        label_list.remove('abstract1')
         label_list.remove('abstract2')
         num_labels = len(label_list)
         is_regression=False
@@ -476,7 +489,7 @@ def main():
         ignore_mismatched_sizes=args.ignore_mismatched_sizes,
     )
 
-
+    #数据注册处
     # Preprocessing the datasets
     if args.task_name is not None:
         sentence1_key, sentence2_key = task_to_keys[args.task_name]
@@ -487,6 +500,9 @@ def main():
             sentence1_key, sentence2_key = "sentence1", "sentence2"
         elif 'title' in non_label_column_names and 'abstract' in non_label_column_names:
             sentence1_key,sentence2_key = 'title', 'abstract'
+        elif ('title' not in non_label_column_names) and ('abstract' in non_label_column_names):
+            sentence1_key,sentence2_key = 'abstract',None
+
         elif 'title1' in non_label_column_names and 'abstract1' in non_label_column_names:
             sentence1_key, sentence2_key, sentence3_key, sentence4_key = 'title1', 'abstract1', 'title2', 'abstract2'
         else:
@@ -568,7 +584,7 @@ def main():
                 texts = (mid_lst1,mid_lst2)
         '''
 
-        if args.train_mode == 'simcse_sup' and 'zhihu' in args.train_file:
+        if args.train_mode == 'simcse_sup' and ('zhihu' in args.train_file or 'new' in args.train_file):
             mid_lst = [*zip(examples[sentence1_key], examples[sentence2_key])]
             mid_lst_ = []
             for ml in mid_lst:
@@ -626,12 +642,12 @@ def main():
             #     result['labels'] = labels_lst
 
 
-        elif ('title' in examples and 'abstract' in examples) or ('title1' in examples and 'abstract1' in examples):
+        elif ('title' in examples and 'abstract' in examples) or ('abstract1' in examples):
             labels_lst = []
             try:
                 batch_length = len(examples['title'])
             except:
-                batch_length = len(examples['title1'])
+                batch_length = len(examples['abstract1'])
             for lb in examples:
                 assert batch_length==len(examples[lb]),'error!'
 

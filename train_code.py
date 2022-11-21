@@ -578,23 +578,96 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 : 0.608, 'micro-recall': 0.0517464424320828, 'micro-f1': 0.09537554119344921};threshold:0.2
 
 ----------
-bertbasehm123_256_7 7 no mlp 0.98 0.01 0.01
+sciberthm123_256_7 7 no mlp 0.98 0.01 0.01
 在s4服务器上跑的 x
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/bertbasehm123_256_7   --checkpointing_steps 2000
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/sciberthm123_256_7   --checkpointing_steps 2000
 
 在本机上跑的
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/bertbasehm123_256_7   --checkpointing_steps 2000
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_7   --checkpointing_steps 2000
+{'suset_accuracy': 0.0, 'accuracy': 0.4148957189188589, 'precision': 0.6482174390968508, 'recall': 0.5261266262959607, 'f1': 0.573043303781627, 'micro-precision': 0.6426631002633009, 'micro-recall': 0.5234901613671955, 'micro-f1': 0.5769872985497458};threshold:0.27
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/sciberthm123_256_7     --train_file E:/data/nlpcct5/nlpcct5_hm123.py   --max_length 256  --threshold 0.27  --train_mode hm12   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_7/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0, 'accuracy': 0.3802734576206964, 'precision': 0.6125031116432587, 'recall': 0.49135521734765525, 'f1': 0.5372214733855412, 'micro-precision': 0.605720814115855, 'micro-recall': 0.48812507459124, 'micro-f1': 0.5406017806059348, 'threshold': 0.27}
 
 
 ----------
-bertbasehm123_256_8 8 no mlp 0.4 0.3 0.3
+sciberthm123_256_8 8 no mlp 0.4 0.3 0.3
 在s4服务器上跑的
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/bertbasehm123_256_8   --checkpointing_steps 2000
+{'suset_accuracy': 0.0, 'accuracy': 0.23486406042047125, 'precision': 0.42539391663891657, 'recall': 0.34000634444245126, 'f1': 0.37129483694812715, 'micro-precision': 0.42541483781179745, 'micro-recall': 0.33820725811942537, 'micro-f1': 0.3768313845978778};threshold:0.2
+
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/transformers4/bertbasehm123_256_8/     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123.py --threshold 0.2    --max_length 256    --train_mode hm12    --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/bertbasehm123_256_8/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0, 'accuracy': 0.2199126586864963, 'precision': 0.4032839022089022, 'recall': 0.3211356033210583, 'f1': 0.3511557621572125, 'micro-precision': 0.4038018557189296, 'micro-recall': 0.3197960888616098, 'micro-f1': 0.3569226670726138, 'threshold': 0.2}
+
+
+
+----------
+sciberthm123_256_9
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/scibert     --train_file D:/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --report_to wandb --with_tracking   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/sciberthm123_256_9/   --checkpointing_steps 2000
+{"suset_accuracy": 0.0, "accuracy": 0.4127715824457866, "precision": 0.6359777743498332, "recall": 0.5315549054677693, "f1": 0.5711764773670871, "micro-precision": 0.6306364836057253, "micro-recall": 0.5287328930346565, "micro-f1": 0.5752062442709925, "threshold": 0.26}
+在电脑2跑的
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/sciberthm123_256_9     --train_file D:/data/nlpcct5/nlpcct5_hm123.py  --threshold 0.26 --max_length 256   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/sciberthm123_256_9/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0, 'accuracy': 0.3802223847445191, 'precision': 0.6015560456863398, 'recall': 0.49844082458728645, 'f1': 0.5372817834924953, 'micro-precision': 0.5959913014935172, 'micro-recall': 0.4953028830579851, 'micro-f1': 0.5410020764080934, 'threshold': 0.26}
+----------
+bertbasehm123_256_9
+在电脑2跑的
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/white_model/bert_base_uncased     --train_file D:/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --report_to wandb --with_tracking   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/bertbasehm123_256_9/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0, 'accuracy': 0.36475755243311003, 'precision': 0.5602629901986558, 'recall': 0.5022958774292443, 'f1': 0.5225951493332519, 'micro-precision': 0.555814349826734, 'micro-recall': 0.4996255191666099, 'micro-f1': 0.5262242620364478, 'threshold': 0.23}
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/bertbasehm123_256_9     --train_file D:/data/nlpcct5/nlpcct5_hm123.py  --threshold 0.26 --max_length 256   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/bertbasehm123_256_9/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0, 'accuracy': 0.34068217785584975, 'precision': 0.5674677853355794, 'recall': 0.45173657807928685, 'f1': 0.4954540301812979, 'micro-precision': 0.5628117040176374, 'micro-recall': 0.4482976147852625, 'micro-f1': 0.4990699616596439, 'threshold': 0.26}
+
+
+----------
+wos_scibert_simcse_d1_r10_bs16
+在s4服务器上跑的
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos_new/wos_rand_sim_together.py   --max_length 256   --do_train True  --train_mode simcse_sup  --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_scibert_simcse_d1_r10   --checkpointing_steps 2000
+
+C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_scibert_simcse_d1_r10\step_22000
+0.02
+
+step24000
+0.46
+
+wos_simcse_1_1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_scibert_simcse_d1_r10/step_22000     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos_new/wos.py   --max_length 256   --do_train True --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_simcse_1_1/   --checkpointing_steps 1000
+
+
+
+test to run
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos_new/wos.py   --max_length 256   --do_train True --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_simcse_1_1_ttr/   --checkpointing_steps 1000
+
+----------
+wos_scibert_simcse_d1_r10_bs_8
+在本机跑的
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos_new/wos_rand_sim_together.py   --max_length 256   --do_train True --train_mode simcse_sup   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/wos_scibert_simcse_d1_r10_bs_8   --checkpointing_steps 1000
 
 
 
 
-python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/bertbasehm123_256_9   --checkpointing_steps 2000
+----------
+wos_scibert_simcse_d1_r1_bs_8
+
+
+
+
+----------
+wos_scibert_1 原版 logits p2s s2p
+
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos_new/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/bertbasehm123_256_6   --checkpointing_steps 2000
+
+
+
+----------
+simcse_wos_scivert_1 原版 logits p2s s2p
+
+----------
 
 '''
 

@@ -1605,7 +1605,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification1(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1905,7 +1905,7 @@ def get_constr_out(x, R):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification3(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2538,8 +2538,10 @@ class BertForSequenceClassification6(BertPreTrainedModel):
 
 
 
-        self.mlp = torch.nn.Linear(self.num_labels * 2, self.num_labels,
-                                   device='cuda' if torch.cuda.is_available() else 'cpu', dtype=torch.double)
+        # 二层
+        # self.mlp = torch.nn.Linear(self.num_labels*2,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
+        # 三层
+        self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -2633,7 +2635,11 @@ class BertForSequenceClassification6(BertPreTrainedModel):
                 train_output1 = get_constr_out(train_output1, self.R12_)
                 P2S_mess = (1 - labels) * constr_output1.double() + labels * train_output1
 
-                c_logit = torch.concat((P2S_mess, S2P_mess), -1)
+                c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((logits,S2P_mess),-1)
+                # c_logit = torch.concat((logits,P2S_mess),-1)
+
                 l_output = self.mlp(c_logit)
 
 
