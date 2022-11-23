@@ -642,10 +642,10 @@ def main():
             #     result['labels'] = labels_lst
 
 
-        elif ('title' in examples and 'abstract' in examples) or ('abstract1' in examples):
+        elif ('abstract' in examples) or ('abstract1' in examples):
             labels_lst = []
             try:
-                batch_length = len(examples['title'])
+                batch_length = len(examples['abstract'])
             except:
                 batch_length = len(examples['abstract1'])
             for lb in examples:
@@ -1557,6 +1557,8 @@ def main():
                                         "step": step,
                                     }
                                 )
+                    with open(os.path.join(args.output_dir,'loss_log.txt'),'a',encoding='utf=8') as f:
+                        f.write(f'<{step}:{loss}>\n')
 
                     if completed_steps >= args.max_train_steps:
                         break
@@ -1703,6 +1705,7 @@ def main():
                 accelerator.save_state(args.output_dir)
             return
         elif args.train_mode == 'hm12':
+            model.config.train_mode = args.train_mode
             hm_train_cycle()
             if args.output_dir is not None:
                 accelerator.save_state(args.output_dir)

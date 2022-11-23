@@ -464,6 +464,38 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 {'suset_accuracy': 0.7853570288389912, 'accuracy': 0.8363662161682631, 'precision': 0.7012943733915713, 'recall': 0.7030939455862348, 'f1': 0.6929601918596687, 'micro-precision': 0.8618708098329254, 'micro-recall': 0.8618708098329254, 'micro-f1': 0.8618708098329254}
 
 
+scibert_fl_wos  11/23 0:40
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_fl_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+accuracy : 0.1217764534780624  f1 :0.18266468021709056
+
+
+scibert_bce_wos  11/23 7:50 # 代码正确
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_bce_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+
+scibert_cb_wos  11/23 7:58
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_cb_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8412259231669682, 'accuracy': 0.8741087581142795, 'precision': 0.8905501755879536, 'recall': 0.8905501755879536, 'f1': 0.8905501
+755879536, 'micro-precision': 0.8905501755879536, 'micro-recall': 0.8905501755879536, 'micro-f1': 0.8905501755879536}
+
+R-BCE-Focal
+scibert_rbcefl_wos  11/23 9:40+-
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_rbcefl_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8384590826859636, 'accuracy': 0.8714838068887107, 'precision': 0.8879961689901033, 'recall': 0.8879961689901033, 'f1': 0.8879961
+689901033, 'micro-precision': 0.8879961689901033, 'micro-recall': 0.8879961689901033, 'micro-f1': 0.8879961689901031}
+
+
+CBloss-ntr
+scibert_cbntr_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_cbntr_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8385654996275407, 'accuracy': 0.8713773899471337, 'precision': 0.8877833351069491, 'recall': 0.8877833351069491, 'f1': 0.8877833
+351069491, 'micro-precision': 0.8877833351069491, 'micro-recall': 0.8877833351069491, 'micro-f1': 0.8877833351069491}
+
+
+DBloss
+scibert_db_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_db_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+
+
 
 hm12 debug
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_test   --checkpointing_steps 2
@@ -638,6 +670,8 @@ step24000
 wos_simcse_1_1
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_scibert_simcse_d1_r10/step_22000     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos_new/wos.py   --max_length 256   --do_train True --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_simcse_1_1/   --checkpointing_steps 1000
 
+wos_scibert_2
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/wos_new/wos.py   --max_length 256   --do_train True --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_scibert_2/   --checkpointing_steps 1000
 
 
 test to run
@@ -648,8 +682,8 @@ wos_scibert_simcse_d1_r10_bs_8
 在本机跑的
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos_new/wos_rand_sim_together.py   --max_length 256   --do_train True --train_mode simcse_sup   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/wos_scibert_simcse_d1_r10_bs_8   --checkpointing_steps 1000
 
-
-
+test run
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos_new/wos.py   --max_length 256   --do_train True --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/simcse_test   --checkpointing_steps 5
 
 ----------
 wos_scibert_simcse_d1_r1_bs_8
@@ -664,8 +698,12 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 
 
 
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/wos_new/wos.py   --max_length 256   --do_train True  --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/wos_scibert_1   --checkpointing_steps 1000
+
+
+
 ----------
-simcse_wos_scivert_1 原版 logits p2s s2p
+simcse_wos_scibert_1 原版 logits p2s s2p
 
 ----------
 

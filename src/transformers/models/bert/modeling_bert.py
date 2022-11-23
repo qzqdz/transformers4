@@ -1586,6 +1586,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
                                               map_param=dict(alpha=0.1, beta=10.0, gamma=0.05),
                                               class_freq=class_freq, train_num=train_num)
 
+
         else:
             loss_fct = BCEWithLogitsLoss()
     return loss_fct
@@ -1605,7 +1606,7 @@ def loss_choice(loss_func_name,class_freq,train_num,model_config):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification1(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -1929,6 +1930,10 @@ class BertForSequenceClassification3(BertPreTrainedModel):
         self.dropout = nn.Dropout(classifier_dropout)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
+        with open(os.path.join(LABEL_PATH, 'nlpcc_f_dict.json'), 'r', encoding='utf-8') as f:
+            label_num_dict = json.load(f)
+
+        self.label_num_list = list(label_num_dict.values())
         # Initialize weights and apply final processing
         self.post_init()
 
@@ -2499,7 +2504,7 @@ class BertForSequenceClassification5(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification6(BertPreTrainedModel):
+class BertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2646,11 +2651,18 @@ class BertForSequenceClassification6(BertPreTrainedModel):
 
                 if self.training:
                     # 此处可加权~
-                    loss_fct = BCEWithLogitsLoss()
+
+                    # loss_fct = BCEWithLogitsLoss()
 
                     # loss_func_name = 'FL'
-                    # train_num = 30070
-                    # loss_fct = loss_choice(loss_func_name, self.label_num_list, train_num, model_config=None)
+                    # loss_func_name = 'CBloss'
+                    # loss_func_name = 'R-BCE-Focal'
+                    # loss_func_name = 'CBloss-ntr'
+                    loss_func_name = 'DBloss'
+                    # loss_func_name = 'BCE'
+
+                    train_num = 30070
+                    loss_fct = loss_choice(loss_func_name, self.label_num_list, train_num, model_config=None)
 
 
                     loss = loss_fct(l_output.double(), labels.double())
