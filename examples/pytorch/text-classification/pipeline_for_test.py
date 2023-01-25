@@ -85,7 +85,8 @@ DATA_PATH = r'E:\data\nlpcct5\nlpcct5_hm123.py'
 # MODEL_PATH=r'E:\model\transformers4\bertsimcse_lr20_bs8_256_lv1_1'
 # MODEL_PATH=r'E:\model\transformers4\simcse_sup_bertbase_lr20_bs8_256'
 # MODEL_PATH=r'E:\model\transformers4\simcse_sup_bertbase_lr20_bs8_256'
-MODEL_PATH=r'E:\model\transformers4\sciberthm123_lr20_bs8_256_lv123_1'
+# MODEL_PATH=r'E:\model\transformers4\sciberthm123_lr20_bs8_256_lv123_1'
+MODEL_PATH=r'E:/model/transformers4/sciberthm123_256_3/'
 # c2
 
 if not os.path.exists(os.path.join(MODEL_PATH, 'eval_res')):
@@ -137,6 +138,33 @@ def log_into_file(processed_datasets,label_list,num_labels,model,door=None):
     with open(os.path.join(EVAL_RES_PATH, 'labels.txt'), 'w', encoding='utf-8') as f:
         f.write(str(label_list))
 
+def log_into_file_txt(processed_datasets,label_list,num_labels,model,door=None):
+
+    for step, data in enumerate(processed_datasets):
+        if step % 500 == 0:
+            print(f'iterated to {step} steps now.totally {len(processed_datasets)} steps.')
+        txt_len = len(data['input_ids'])
+        input = {'input_ids': torch.tensor(data['input_ids']).reshape(1, txt_len),
+                 'token_type_ids': torch.tensor(data['token_type_ids']).reshape(1, txt_len),
+                 'attention_mask': torch.tensor(data['attention_mask']).reshape(1, txt_len),
+                 'labels': torch.tensor(data['labels']).reshape(1, num_labels)}
+
+        outputs = model(**input)['outputs'].tolist()
+
+        if door is not None:
+            outputs = (np.greater(outputs,door).astype(np.int32)).tolist()[0]
+        with open(os.path.join(EVAL_RES_PATH, 'eval_res.txt'), 'a', encoding='utf-8') as f:
+            # f.write(data['title']+" ")
+            # f.write(str(outputs)+"  ")
+            # f.write(str(input['labels'].type(torch.int).tolist()[0])+"\n")
+            f.write("title: " + data['title'] + "\n")
+            f.write("predictions: " + str(outputs) + "\n")
+            f.write("references: " + str(input['labels'].type(torch.int).tolist()[0]) + "\n")
+
+    with open(os.path.join(EVAL_RES_PATH, 'labels.txt'), 'w', encoding='utf-8') as f:
+        f.write(str(label_list))
+
+
 
 
 
@@ -145,6 +173,8 @@ def main():
     sentence1_key, sentence2_key = 'title', 'abstract'
     data = load_dataset(DATA_PATH)
     eval_data = data['validation']
+    eval_data = eval_data.select(range(500))
+
 
     label_list = eval_data.column_names
     label_list.sort()
@@ -242,7 +272,8 @@ def main():
 
     if task=='log':
         model = model_init()
-        log_into_file(processed_datasets, label_list, num_labels, model)#,door=0.25)
+        log_into_file_txt(processed_datasets, label_list, num_labels, model)#,door=0.25)
+        # log_into_file
         return
 
     if task=='test':

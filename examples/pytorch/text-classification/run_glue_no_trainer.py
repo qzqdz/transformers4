@@ -288,8 +288,10 @@ class multicheck:
             # print(label[0],predictions[0])
             self.eval_metric['suset_accuracy'] = accuracy_score(label,predictions)
             self.eval_metric['accuracy'] = accuracy_cal(label,predictions)
-            self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
+            # self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='samples')
+            self.eval_metric['precision'],self.eval_metric['recall'],self.eval_metric['f1'],_ = precision_recall_fscore_support(label,predictions, average='macro')
             self.eval_metric['micro-precision'],self.eval_metric['micro-recall'],self.eval_metric['micro-f1'],_ = precision_recall_fscore_support(label,predictions, average='micro',zero_division=0)
+            # self.eval_metric['micro-precision'], self.eval_metric['micro-recall'], self.eval_metric['micro-f1'], _ = precision_recall_fscore_support(label, predictions, average='macro', zero_division=0)
         else:
             # print(label)
             # print(predictions)
@@ -584,7 +586,7 @@ def main():
                 texts = (mid_lst1,mid_lst2)
         '''
 
-        if args.train_mode == 'simcse_sup' and ('zhihu' in args.train_file or 'new' in args.train_file):
+        if args.train_mode == 'simcse_sup' and ('zhihu' in args.train_file or 'new' in args.train_file or 'waimai' in args.train_file):
             mid_lst = [*zip(examples[sentence1_key], examples[sentence2_key])]
             mid_lst_ = []
             for ml in mid_lst:
@@ -621,7 +623,7 @@ def main():
         result = tokenizer(*texts, padding=padding, max_length=args.max_length, truncation=True,add_special_tokens=True)
 
         if "label" in examples:
-            if 'zhihu' in args.train_file and 'simcse' in args.train_mode:
+            if ('zhihu' in args.train_file or 'waimai' in args.train_file) and 'simcse' in args.train_mode:
                 labels_lst = []
                 for i in range(len(examples['label'])):
                     labels_lst.append(examples['label'][i])
@@ -1790,8 +1792,10 @@ def main():
                         predictions = torch.ge(metric.predictions, threshold).type(torch.int)
                         # print(predictions)
                         metric.check(predictions)
-                        if metric.eval_metric['micro-f1'] > best_f1:
-                            best_f1 = metric.eval_metric['micro-f1']
+                        f1 = 'micro-f1'
+                        # f1 = 'macro-f1'
+                        if metric.eval_metric[f1] > best_f1:
+                            best_f1 = metric.eval_metric[f1]
                             best_dir = metric.eval_metric
                             best_th = threshold
                     if best_dir:

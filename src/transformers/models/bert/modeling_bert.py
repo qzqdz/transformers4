@@ -1906,7 +1906,7 @@ def get_constr_out(x, R):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification3(BertPreTrainedModel):
+class BertForSequenceClassification4(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2027,19 +2027,19 @@ class BertForSequenceClassification3(BertPreTrainedModel):
 
 
 
-                # c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
+                c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
                 # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
                 # c_logit = torch.concat((logits,S2P_mess),-1)
                 # c_logit = torch.concat((logits,P2S_mess),-1)
 
-                # l_output = self.mlp(c_logit)
+                l_output = self.mlp(c_logit)
 
 
 
                 if self.training:
                     # 此处可加权~
                     # no mlp
-                    loss_fct = BCELoss()
+                    # loss_fct = BCELoss()
                     # loss = loss_fct(1 * logits.double() ,#+  P2S_mess.double() ,#+ 0.1 * S2P_mess.double(),
                     #                 labels.double())
                     # loss = loss_fct(logits.double(),labels.double())
@@ -2047,14 +2047,26 @@ class BertForSequenceClassification3(BertPreTrainedModel):
                     # no mlp
                     # outputs_ = torch.sigmoid(0.4 * logits.double() + 0.3 * S2P_mess.double() + 0.3 * P2S_mess.double())
                     # no mlp 1
-                    outputs_ = torch.sigmoid(
-                        0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
-                    loss = loss_fct(outputs_.double(), labels.double())
+                    # outputs_ = torch.sigmoid(
+                    #     0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
+                    # loss = loss_fct(outputs_.double(), labels.double())
 
                     # mlp
                     # loss_fct = BCEWithLogitsLoss()
-                    # loss = loss_fct(l_output.double(),labels.double())
-                    # outputs_ = torch.sigmoid(l_output.double())
+
+
+                    # loss_func_name = 'FL'
+                    # loss_func_name = 'CBloss'
+                    # loss_func_name = 'R-BCE-Focal'
+                    loss_func_name = 'CBloss-ntr'
+                    # loss_func_name = 'DBloss'
+                    # loss_func_name = 'BCE'
+
+                    train_num = 85000
+                    loss_fct = loss_choice(loss_func_name, self.label_num_list, train_num, model_config=None)
+
+                    loss = loss_fct(l_output.double(),labels.double())
+                    outputs_ = torch.sigmoid(l_output.double())
 
                     return {'loss': loss, 'outputs': outputs_}
 
@@ -2062,12 +2074,12 @@ class BertForSequenceClassification3(BertPreTrainedModel):
                     # outputs_ = sigmoid_output
 
                     # mlp
-                    # outputs_ = torch.sigmoid(l_output.double())
+                    outputs_ = torch.sigmoid(l_output.double())
 
                     # no mlp
                     # outputs_ = torch.sigmoid(0.4 * logits.double() + 0.3 * S2P_mess.double() + 0.3 * P2S_mess.double())
                     # no mlp 1
-                    outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
+                    # outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
 
 
 
@@ -2126,11 +2138,239 @@ class BertForSequenceClassification3(BertPreTrainedModel):
 @add_start_docstrings(
     """
     this bert model is modified.
+    hm123 classificaion
+    iso
+    """,
+    BERT_START_DOCSTRING,
+)
+class BertForSequenceClassification(BertPreTrainedModel):
+    def __init__(self, config):
+        super().__init__(config)
+        self.num_labels = config.num_labels
+        self.config = config
+        with open(os.path.join(LABEL_PATH, 'iso_R123.txt'), 'r', encoding='utf-8') as f:
+            R123 = eval(f.read())
+
+        self.R123_ = torch.tensor(R123, device='cuda' if torch.cuda.is_available() else 'cpu').transpose(1, 0)
+        self.R123 = torch.tensor(R123, device='cuda' if torch.cuda.is_available() else 'cpu')
+
+        # 二层
+        # self.mlp = torch.nn.Linear(self.num_labels*2,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
+        # 三层
+        self.mlp = torch.nn.Linear(self.num_labels * 3, self.num_labels,
+                                   device='cuda' if torch.cuda.is_available() else 'cpu', dtype=torch.double)
+
+        self.bert = BertModel(config)
+        classifier_dropout = (
+            config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
+        )
+        self.dropout = nn.Dropout(classifier_dropout)
+        self.classifier = nn.Linear(config.hidden_size, config.num_labels)
+
+        with open(os.path.join(LABEL_PATH, 'iso_nlpcc_f_dict.json'), 'r', encoding='utf-8') as f:
+            label_num_dict = json.load(f)
+
+        self.label_num_list = list(label_num_dict.values())
+        # Initialize weights and apply final processing
+        self.post_init()
+
+    @add_start_docstrings_to_model_forward(BERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_code_sample_docstrings(
+        processor_class=_TOKENIZER_FOR_DOC,
+        checkpoint=_CHECKPOINT_FOR_SEQUENCE_CLASSIFICATION,
+        output_type=SequenceClassifierOutput,
+        config_class=_CONFIG_FOR_DOC,
+        expected_output=_SEQ_CLASS_EXPECTED_OUTPUT,
+        expected_loss=_SEQ_CLASS_EXPECTED_LOSS,
+    )
+    def forward(
+            self,
+            input_ids: Optional[torch.Tensor] = None,
+            attention_mask: Optional[torch.Tensor] = None,
+            token_type_ids: Optional[torch.Tensor] = None,
+            position_ids: Optional[torch.Tensor] = None,
+            head_mask: Optional[torch.Tensor] = None,
+            inputs_embeds: Optional[torch.Tensor] = None,
+            labels: Optional[torch.Tensor] = None,
+            output_attentions: Optional[bool] = None,
+            output_hidden_states: Optional[bool] = None,
+            return_dict: Optional[bool] = None,
+    ) -> Union[Tuple[torch.Tensor], SequenceClassifierOutput]:
+        r"""
+        labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):
+            Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,
+            config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If
+            `config.num_labels > 1` a classification loss is computed (Cross-Entropy).
+        """
+        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+
+        outputs = self.bert(
+            input_ids,
+            attention_mask=attention_mask,
+            token_type_ids=token_type_ids,
+            position_ids=position_ids,
+            head_mask=head_mask,
+            inputs_embeds=inputs_embeds,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict=return_dict,
+        )
+
+        pooled_output = outputs[1]
+
+        pooled_output = self.dropout(pooled_output)
+        logits = self.classifier(pooled_output)
+
+        loss = None
+        if labels is not None:
+            if self.config.problem_type is None:
+                if self.num_labels == 1:
+                    self.config.problem_type = "regression"
+                elif self.num_labels > 1 and (labels.dtype == torch.long or labels.dtype == torch.int):
+                    self.config.problem_type = "single_label_classification"
+                else:
+                    self.config.problem_type = "multi_label_classification"
+
+            # print(self.config.problem_type)
+            if self.config.problem_type == "regression":
+                loss_fct = MSELoss()
+                if self.num_labels == 1:
+                    loss = loss_fct(logits.squeeze(), labels.squeeze())
+                else:
+                    loss = loss_fct(logits, labels)
+            elif self.config.problem_type == "single_label_classification":
+                loss_fct = CrossEntropyLoss(
+                    weight=torch.tensor([700.0, 3303.0], device='cuda' if torch.cuda.is_available() else 'cpu'),
+                    size_average=True
+                )
+                # loss_fct = CrossEntropyLoss()
+
+                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            elif self.config.problem_type == "multi_label_classification":
+
+                # no sigmoid
+                # 1loss logits double R123
+
+                constr_output = get_constr_out(logits, self.R123)
+                train_output = labels * logits.double()
+                train_output = get_constr_out(train_output, self.R123)
+                S2P_mess = (1 - labels) * constr_output.double() + labels * train_output
+
+                constr_output = get_constr_out(logits, self.R123_)
+                train_output = labels * logits.double()
+                train_output = get_constr_out(train_output, self.R123_)
+                P2S_mess = (1 - labels) * constr_output.double() + labels * train_output
+
+                c_logit = torch.concat((logits, P2S_mess, S2P_mess), -1)
+                # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((logits,S2P_mess),-1)
+                # c_logit = torch.concat((logits,P2S_mess),-1)
+
+                l_output = self.mlp(c_logit)
+
+                if self.training:
+                    # 此处可加权~
+                    # no mlp
+                    # loss_fct = BCELoss()
+                    # loss = loss_fct(1 * logits.double() ,#+  P2S_mess.double() ,#+ 0.1 * S2P_mess.double(),
+                    #                 labels.double())
+                    # loss = loss_fct(logits.double(),labels.double())
+
+                    # no mlp
+                    # outputs_ = torch.sigmoid(0.4 * logits.double() + 0.3 * S2P_mess.double() + 0.3 * P2S_mess.double())
+                    # no mlp 1
+                    # outputs_ = torch.sigmoid(
+                    #     0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
+                    # loss = loss_fct(outputs_.double(), labels.double())
+
+                    # mlp
+                    # loss_fct = BCEWithLogitsLoss()
+
+                    # loss_func_name = 'FL'
+                    # loss_func_name = 'CBloss'
+                    # loss_func_name = 'R-BCE-Focal'
+                    loss_func_name = 'CBloss-ntr'
+                    # loss_func_name = 'DBloss'
+                    # loss_func_name = 'BCE'
+
+                    train_num = 85000
+                    loss_fct = loss_choice(loss_func_name, self.label_num_list, train_num, model_config=None)
+
+                    loss = loss_fct(l_output.double(), labels.double())
+                    outputs_ = torch.sigmoid(l_output.double())
+
+                    return {'loss': loss, 'outputs': outputs_}
+
+                else:
+                    # outputs_ = sigmoid_output
+
+                    # mlp
+                    outputs_ = torch.sigmoid(l_output.double())
+
+                    # no mlp
+                    # outputs_ = torch.sigmoid(0.4 * logits.double() + 0.3 * S2P_mess.double() + 0.3 * P2S_mess.double())
+                    # no mlp 1
+                    # outputs_ = torch.sigmoid(0.98 * logits.double() + 0.01 * P2S_mess.double() + 0.01 * S2P_mess.double())
+
+                    return {'outputs': outputs_}
+
+                # after sigmoid
+                # sigmoid_output = torch.sigmoid(logits)
+                #
+                #
+                # constr_output = get_constr_out(sigmoid_output, self.R12)
+                # train_output = labels*sigmoid_output.double()
+                # train_output = get_constr_out(train_output, self.R12)
+                # outputs = (1 - labels) * constr_output.double() + labels * train_output
+                #
+                # if self.training:
+                #     # 此处可加权~
+                #     # loss_fct1 = BCELoss()
+                #     # loss_fct2 = BCELoss()
+                #     # loss = 0.3*loss_fct1(outputs.double(),labels.double())+0.7*loss_fct2(sigmoid_output.double(),labels.double())
+                #     # outputs_ = torch.sigmoid((outputs+sigmoid_output).double())
+                #
+                #     # 1.4 1loss
+                #     # loss_fct = BCELoss()
+                #     # loss = loss_fct(0.7*sigmoid_output.double() + 0.3*outputs.double(),labels.double())
+                #     # outputs_ = torch.sigmoid((0.3*outputs+0.7*sigmoid_output).double())
+                #
+                #     # 1.5 1loss
+                #     loss_fct = BCELoss()
+                #     # loss = loss_fct(0.9*sigmoid_output.double() + 0.1*outputs.double(),labels.double())
+                #     loss = loss_fct(sigmoid_output.double(),labels.double())
+                #     outputs_ = torch.sigmoid((0.1*outputs+0.9*sigmoid_output).double())
+                #
+                #     return {'loss': loss, 'outputs': outputs_}
+                #
+                # else:
+                #     # outputs_ = sigmoid_output
+                #     outputs_ = torch.sigmoid((0.1*outputs + 0.9*sigmoid_output).double())
+                #     return {'outputs': outputs_}
+
+                # 1.3
+                # if self.training:
+                #     # 此处可加权~
+                #     loss_fct1 = BCELoss()
+                #     loss_fct2 = BCELoss()
+                #     loss = 0.3*loss_fct1(outputs.double(),labels.double())+0.7*loss_fct2(sigmoid_output.double(),labels.double())
+                #     outputs_ = torch.sigmoid((outputs+sigmoid_output).double())
+                #     return {'loss': loss, 'outputs': outputs_}
+                # else:
+                #     # outputs = sigmoid_output
+                #     outputs_ = torch.sigmoid((outputs + sigmoid_output).double())
+                #     return {'outputs': outputs_}
+
+
+# 修改处
+@add_start_docstrings(
+    """
+    this bert model is modified.
     hm123 classificaion cpu version
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification4(BertPreTrainedModel):
+class BertForSequenceClassification5(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2143,7 +2383,7 @@ class BertForSequenceClassification4(BertPreTrainedModel):
         self.R123_ = torch.tensor(R123)
         self.multi_label_node = multi_label_node
         self.mlp = torch.nn.Linear(self.num_labels * 3, self.num_labels,dtype=torch.double)
-
+        # self.mlp = torch.nn.Linear(self.num_labels * 2, self.num_labels, dtype=torch.double)
         self.bert = BertModel(config)
         classifier_dropout = (
             config.classifier_dropout if config.classifier_dropout is not None else config.hidden_dropout_prob
@@ -2241,7 +2481,12 @@ class BertForSequenceClassification4(BertPreTrainedModel):
                 train_output = get_constr_out(train_output, self.R123_)
                 P2S_mess = (1 - labels) * constr_output.double() + labels * train_output
 
+
+
                 c_logit = torch.concat((logits, P2S_mess, S2P_mess), -1)
+                # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((logits,S2P_mess),-1)
+                # c_logit = torch.concat((logits,P2S_mess),-1)
                 l_output = self.mlp(c_logit)
 
                 if self.training:
@@ -2320,7 +2565,7 @@ class BertForSequenceClassification4(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification5(BertPreTrainedModel):
+class BertForSequenceClassification6(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2504,7 +2749,7 @@ class BertForSequenceClassification5(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification(BertPreTrainedModel):
+class BertForSequenceClassification7(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2546,7 +2791,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
         # 二层
         # self.mlp = torch.nn.Linear(self.num_labels*2,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
         # 三层
-        self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
+        # self.mlp = torch.nn.Linear(self.num_labels*3,self.num_labels,device='cuda' if torch.cuda.is_available() else 'cpu',dtype=torch.double)
 
         # Initialize weights and apply final processing
         self.post_init()
@@ -2629,50 +2874,58 @@ class BertForSequenceClassification(BertPreTrainedModel):
 
                 # no sigmoid
                 # 1.11 1loss logits double R12
-                constr_output = get_constr_out(logits, self.R12)
-                train_output = labels * logits.double()
-                train_output = get_constr_out(train_output, self.R12)
-                S2P_mess = (1 - labels) * constr_output.double() + labels * train_output
+                # constr_output = get_constr_out(logits, self.R12)
+                # train_output = labels * logits.double()
+                # train_output = get_constr_out(train_output, self.R12)
+                # S2P_mess = (1 - labels) * constr_output.double() + labels * train_output
+                #
+                #
+                # constr_output1 = get_constr_out(logits, self.R12_)
+                # train_output1 = labels * logits.double()
+                # train_output1 = get_constr_out(train_output1, self.R12_)
+                # P2S_mess = (1 - labels) * constr_output1.double() + labels * train_output1
 
-
-                constr_output1 = get_constr_out(logits, self.R12_)
-                train_output1 = labels * logits.double()
-                train_output1 = get_constr_out(train_output1, self.R12_)
-                P2S_mess = (1 - labels) * constr_output1.double() + labels * train_output1
-
-                c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
+                # c_logit = torch.concat((logits,P2S_mess,S2P_mess),-1)
                 # c_logit = torch.concat((P2S_mess,S2P_mess),-1)
                 # c_logit = torch.concat((logits,S2P_mess),-1)
                 # c_logit = torch.concat((logits,P2S_mess),-1)
 
-                l_output = self.mlp(c_logit)
+                # l_output = self.mlp(c_logit)
 
 
 
                 if self.training:
                     # 此处可加权~
-
+                    # no mlp
                     # loss_fct = BCEWithLogitsLoss()
+                    # loss = loss_fct(logits.double(),labels.double())
+                    # outputs_ = torch.sigmoid(logits.double())
 
                     # loss_func_name = 'FL'
                     # loss_func_name = 'CBloss'
                     # loss_func_name = 'R-BCE-Focal'
-                    # loss_func_name = 'CBloss-ntr'
-                    loss_func_name = 'DBloss'
+                    loss_func_name = 'CBloss-ntr'
+                    # loss_func_name = 'DBloss'
                     # loss_func_name = 'BCE'
 
                     train_num = 30070
                     loss_fct = loss_choice(loss_func_name, self.label_num_list, train_num, model_config=None)
 
 
-                    loss = loss_fct(l_output.double(), labels.double())
-                    outputs_ = torch.sigmoid(l_output.double())
+                    # loss = loss_fct(l_output.double(), labels.double())
+                    # outputs_ = torch.sigmoid(l_output.double())
+
+                    loss = loss_fct(logits.double(),labels.double())
+                    outputs_ = torch.sigmoid(logits.double())
 
                     return {'loss': loss, 'outputs': outputs_}
 
                 else:
+                    # mlp
+                    # outputs_ = torch.sigmoid(l_output.double())
 
-                    outputs_ = torch.sigmoid(l_output.double())
+                    # no mlp
+                    outputs_ = torch.sigmoid(logits.double())
                     return {'outputs': outputs_}
 
 
@@ -2684,7 +2937,7 @@ class BertForSequenceClassification(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification7(BertPreTrainedModel):
+class BertForSequenceClassification8(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2861,7 +3114,7 @@ class BertForSequenceClassification7(BertPreTrainedModel):
     """,
     BERT_START_DOCSTRING,
 )
-class BertForSequenceClassification8(BertPreTrainedModel):
+class BertForSequenceClassification9(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
@@ -2942,11 +3195,12 @@ class BertForSequenceClassification8(BertPreTrainedModel):
                 else:
                     loss = loss_fct(logits, labels)
             elif self.config.problem_type == "single_label_classification":
-                loss_fct = CrossEntropyLoss(
-                    weight=torch.tensor([700.0,3303.0],device='cuda' if torch.cuda.is_available() else 'cpu'),
-                    size_average=True
-                                            )
-                # loss_fct = CrossEntropyLoss()
+                # loss_fct = CrossEntropyLoss(
+                #     weight=torch.tensor([700.0,3303.0],device='cuda' if torch.cuda.is_available() else 'cpu'),
+                #     size_average=True
+                #                             )
+                loss_fct = CrossEntropyLoss()
+
 
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             elif self.config.problem_type == "multi_label_classification":

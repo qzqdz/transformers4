@@ -280,6 +280,8 @@ bertsimcsesimt_lr20_bs8_256_lv1_2 10000epochtrain
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/nlpcc_simcse_sup_bert_2/step_10000     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True    --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8  --report_to wandb --with_tracking   --num_train_epochs 3     --output_dir E:/model/transformers4/bertsimcsesimt_lr20_bs8_256_lv1_2/  --checkpointing_steps 1000
 
 
+
+
 bertsimcsesimt_lr20_bs8_256_lv1_3 0.15 8000epochtrain
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py    --model_name_or_path E:/model/transformers4/nlpcc_simcse_sup_bert_3/step_8000     --train_file E:/data/nlpcct5/nlpcct5.py  --do_train True    --learning_rate 2e-5    --max_length 256 --per_device_train_batch_size 8   --per_device_eval_batch_size 8  --report_to wandb --with_tracking   --num_train_epochs 3     --output_dir E:/model/transformers4/bertsimcsesimt_lr20_bs8_256_lv1_3/  --checkpointing_steps 1000
 
@@ -464,6 +466,10 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 {'suset_accuracy': 0.7853570288389912, 'accuracy': 0.8363662161682631, 'precision': 0.7012943733915713, 'recall': 0.7030939455862348, 'f1': 0.6929601918596687, 'micro-precision': 0.8618708098329254, 'micro-recall': 0.8618708098329254, 'micro-f1': 0.8618708098329254}
 
 
+
+
+
+
 scibert_fl_wos  11/23 0:40
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_fl_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
 accuracy : 0.1217764534780624  f1 :0.18266468021709056
@@ -471,32 +477,133 @@ accuracy : 0.1217764534780624  f1 :0.18266468021709056
 
 scibert_bce_wos  11/23 7:50 # 代码正确
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_bce_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+acc 0.784363804050915 f1 0.8212727466212622
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert_bce_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_bce_wos/   --checkpointing_steps 1000
+0.5962452939387255
+
+simcse_bert_bce
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12/   --checkpointing_steps 1000
+macrof1 0.6929601918596687 microf1 0.8618708098329254 acc 0.8363662161682631
 
 scibert_cb_wos  11/23 7:58
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_cb_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
-{'suset_accuracy': 0.8412259231669682, 'accuracy': 0.8741087581142795, 'precision': 0.8905501755879536, 'recall': 0.8905501755879536, 'f1': 0.8905501
-755879536, 'micro-precision': 0.8905501755879536, 'micro-recall': 0.8905501755879536, 'micro-f1': 0.8905501755879536}
+{'suset_accuracy': 0.8412259231669682, 'accuracy': 0.8741087581142795, 'precision': 0.8905501755879536, 'recall': 0.8905501755879536, 'f1': 0.8905501755879536, 'micro-precision': 0.8905501755879536, 'micro-recall': 0.8905501755879536, 'micro-f1': 0.8905501755879536}
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert_cb_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_cb_wos/   --checkpointing_steps 1000
+0.7917832888921033
+
 
 R-BCE-Focal
 scibert_rbcefl_wos  11/23 9:40+-
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_rbcefl_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
-{'suset_accuracy': 0.8384590826859636, 'accuracy': 0.8714838068887107, 'precision': 0.8879961689901033, 'recall': 0.8879961689901033, 'f1': 0.8879961
-689901033, 'micro-precision': 0.8879961689901033, 'micro-recall': 0.8879961689901033, 'micro-f1': 0.8879961689901031}
+{'suset_accuracy': 0.8384590826859636, 'accuracy': 0.8714838068887107, 'precision': 0.8879961689901033, 'recall': 0.8879961689901033, 'f1': 0.8879961689901033, 'micro-precision': 0.8879961689901033, 'micro-recall': 0.8879961689901033, 'micro-f1': 0.8879961689901031}
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert_rbcefl_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_cb_wos/   --checkpointing_steps 1000
+0.7908821614473451
 
 
 CBloss-ntr
 scibert_cbntr_wos
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_cbntr_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
-{'suset_accuracy': 0.8385654996275407, 'accuracy': 0.8713773899471337, 'precision': 0.8877833351069491, 'recall': 0.8877833351069491, 'f1': 0.8877833
-351069491, 'micro-precision': 0.8877833351069491, 'micro-recall': 0.8877833351069491, 'micro-f1': 0.8877833351069491}
+{'suset_accuracy': 0.8385654996275407, 'accuracy': 0.8713773899471337, 'precision': 0.8877833351069491, 'recall': 0.8877833351069491, 'f1': 0.8877833351069491, 'micro-precision': 0.8877833351069491, 'micro-recall': 0.8877833351069491, 'micro-f1': 0.8877833351069491}
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert_cbntr_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_cbntr_wos/   --checkpointing_steps 1000
 
 
 DBloss
 scibert_db_wos
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000/     --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_db_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8417580078748537, 'accuracy': 0.8745344258805882, 'precision': 0.8909226348834735, 'recall': 0.8909226348834735, 'f1': 0.8909226
+348834735, 'micro-precision': 0.8909226348834735, 'micro-recall': 0.8909226348834735, 'micro-f1': 0.8909226348834735}
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert_db_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/scibert_db_wos/   --checkpointing_steps 1000
+
+----------
+base_scibert_bce_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_scibert_bce_wos/   --checkpointing_steps 1000
+{'suset_accuracy': 0.801319570075556, 'accuracy': 0.843035011173764, 'precision': 0.8638927317228903, 'recall': 0.8638927317228903, 'f1': 0.863892731
+7228903, 'micro-precision': 0.8638927317228903, 'micro-recall': 0.8638927317228903, 'micro-f1': 0.8638927317228903}
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/base_scibert_bce_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_scibert_bce_wos/   --checkpointing_steps 1000
+{'suset_accuracy': 0.8011067361924018, 'accuracy': 0.8428931219183278, 'precision': 0.7214710990171631, 'recall': 0.7257800624118603, 'f1': 0.7165594987987893, 'micro-precision': 0.8637863147813132, 'micro
+-recall': 0.8637863147813132, 'micro-f1': 0.8637863147813132}
 
 
+----------
+base_bert_bce_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12  --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_bert_bce_wos/   --checkpointing_steps 1000
+{'suset_accuracy': 0.7194849420027668, 'accuracy': 0.7856762796637022, 'precision': 0.6352143049531673, 'recall': 0.6427698284552018, 'f1': 0.6275248
+178151367, 'micro-precision': 0.8187719484942003, 'micro-recall': 0.8187719484942003, 'micro-f1': 0.8187719484942003}
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/base_bert_bce_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_bert_bce_wos/   --checkpointing_steps 1000
 
+
+----------
+bhifn_scibert_bce_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/bhifn_scibert_bce_wos/   --checkpointing_steps 1000
+{'suset_accuracy': 0.7639672235819942, 'accuracy': 0.8196942286545155, 'precision': 0.8475577311908056, 'recall': 0.8475577311908056, 'f1': 0.8475577311908056, 'micro-precision': 0.8475577311908056, 'micro
+-recall': 0.8475577311908056, 'micro-f1': 0.8475577311908056}
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/bhifn_scibert_bce_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/bhifn_scibert_bce_wos/   --checkpointing_steps 1000
+ 0.6636446733145177
+
+----------
+base_scibert_cbntr_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_scibert_cbntr_wos/   --checkpointing_steps 1000
+
+macro-f1 0.7965687381137191
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/base_scibert_cbntr_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_scibert_cbntr_wos/   --checkpointing_steps 1000
+{'suset_accuracy': 0.8385654996275407, 'accuracy': 0.8718385300273013, 'precision': 0.797107663291949, 'recall': 0.7994214272216097, 'f1': 0.7965687381137191, 'micro-precision': 0.8884750452272002, 'micro-
+recall': 0.8884750452272002, 'micro-f1': 0.8884750452272002}
+
+ma 0.7965687381137191
+mi 0.8884750452272002
+acc 0.8718385300273013
+
+
+----------
+bhifn_scibert_cbntr_wos
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/bhifn_scibert_cbntr_wos/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8447376822390125, 'accuracy': 0.8777624064417601, 'precision': 0.894274768543152, 'recall': 0.894274768543152, 'f1': 0.894274768
+543152, 'micro-precision': 0.8103550539175588, 'micro-recall': 0.8015228470736716, 'micro-f1': 0.8029892466106487}
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/bhifn_scibert_cbntr_wos     --train_file E:/data/wos/wos.py   --max_length 256 --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/bhifn_scibert_cbntr_wos/   --checkpointing_steps 1000
+{'suset_accuracy': 0.8437799297648185, 'accuracy': 0.8773722109893104, 'precision': 0.8097603960870913, 'recall': 0.8009405040902832, 'f1': 0.8024876031286343, 'micro-precision': 0.8941683516015749, 'micro
+-recall': 0.8941683516015749, 'micro-f1': 0.8941683516015749}
+
+----------
+bhifn_scibert_cbntr_wos_no_simcse
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/bhifn_scibert_cbntr_wos_no_simcse/   --checkpointing_steps 1000
+{'suset_accuracy': 0.8366499946791529, 'accuracy': 0.8719449469688784, 'precision': 0.7986816009913603, 'recall': 0.7894680603841501, 'f1': 0.7895745486024193, 'micro-precision': 0.8895924231137597, 'micro-recall': 0.8895924231137597, 'micro-f1': 0.8895924231137597}
+
+
+----------
+base_scibert_bce_wos_simcse
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_scibert_cbntr_wos_simcse/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8352665744386506, 'accuracy': 0.8693554680571682, 'precision': 0.7911386708188566, 'recall': 0.7746665669811709, 'f1': 0.7756939492209841, 'micro-precision': 0.8863999148664468, 'micro-recall': 0.8863999148664468, 'micro-f1': 0.8863999148664468}
+
+
+----------
+base_scibert_bce_wos_simcse_1
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_scibert_cbntr_wos_simcse_1/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8332446525486857, 'accuracy': 0.8670852399701902, 'precision': 0.7746504625057323, 'recall': 0.768148951930167, 'f1': 0.7665451562389283, 'micro-precision': 0.884005533680962, 'micro-recall': 0.884005533680962, 'micro-f1': 0.884005533680962}
+
+
+----------
+base_scibert_cbntr_wos_simcse
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/scibert123_lr20_bs8_256_lv123_1_12_simcse_base/step_28000      --train_file E:/data/wos/wos.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/base_scibert_cbntr_wos_simcse/   --checkpointing_steps 1000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.8376077471533468, 'accuracy': 0.8710936114362613, 'precision': 0.8051423569768571, 'recall': 0.7985534905278445, 'f1': 0.7995508
+628972241, 'micro-precision': 0.8878365435777376, 'micro-recall': 0.8878365435777376, 'micro-f1': 0.8878365435777376}
+
+----------
 hm12 debug
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/bert     --train_file E:/data/nlpcct5/nlpcct5_hm12.py   --max_length 256   --do_train True  --train_mode hm12  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/berthm12_lr20_bs8_256_lv12_test   --checkpointing_steps 2
 
@@ -655,7 +762,59 @@ test
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path D:/model/transformers4/bertbasehm123_256_9     --train_file D:/data/nlpcct5/nlpcct5_hm123.py  --threshold 0.26 --max_length 256   --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir D:/model/transformers4/bertbasehm123_256_9/   --checkpointing_steps 2000
 {'suset_accuracy': 0.0, 'accuracy': 0.34068217785584975, 'precision': 0.5674677853355794, 'recall': 0.45173657807928685, 'f1': 0.4954540301812979, 'micro-precision': 0.5628117040176374, 'micro-recall': 0.4482976147852625, 'micro-f1': 0.4990699616596439, 'threshold': 0.26}
 
+----------
+sciberthm123_256_10 simcse bce
 
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/transformers4/simcse_nlpcc_scibert/step_10000     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True  --train_mode hm12   --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/sciberthm123_256_10/   --checkpointing_steps 2000 --ignore_mismatched_sizes
+{'suset_accuracy': 0.0232, 'accuracy': 0.6862124274814689, 'precision': 0.8839535702756137, 'recall': 0.7516608721223736, 'f1': 0.8051999145177897, 'micro-precision': 0.8781423262653762, 'micro-recall': 0.7521787975760877, 'micro-f1': 0.8102944007921591};threshold:0.34
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/transformers4/sciberthm123_256_10     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_hm123.py  --threshold 0.34  --max_length 256  --train_mode hm12 --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/sciberthm123_256_10/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0118, 'accuracy': 0.637507490843347, 'precision': 0.8617760862580831, 'recall': 0.7076695225112466, 'f1': 0.7687605602890942, 'micro-precision': 0.8540934048985132, 'micro-recall': 0.7080967725436039, 'micro-f1': 0.7742729306487695, 'threshold': 0.34}
+
+
+----------
+sciberthm123_256_11 cb
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_11/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0682, 'accuracy': 0.7677470786057634, 'precision': 0.9177819916272237, 'recall': 0.8218072173784249, 'f1': 0.8617067707167338, 'micro-precision': 0.9135954290903587, 'micro-recall': 0.8219684074351468, 'micro-f1': 0.8653632486290814};threshold:0.5800000000000001
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/sciberthm123_256_11     --train_file E:/data/nlpcct5/nlpcct5_hm123.py  --threshold 0.58  --max_length 256  --train_mode hm12 --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_11/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0412, 'accuracy': 0.7142526126864944, 'precision': 0.8904032953819485, 'recall': 0.7795319989317068, 'f1': 0.8246803925710505, 'micro-precision': 0.8850376624131053, 'micro-recall': 0.7792610778647299, 'micro-f1': 0.8287879886849931, 'threshold': 0.58}
+
+----------
+补充实验
+sciberthm123_256_13 iso + cbntr
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/iso_nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_13/   --checkpointing_steps 2000
+
+
+
+
+----------
+simcse_nlpcc_scibert
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path C:/Users/Administrator/Desktop/yindechun/model/blank_model/scibert     --train_file C:/Users/Administrator/Desktop/yindechun/data/nlpcct5/nlpcct5_rand_sim_together.py   --max_length 256   --do_train True  --train_mode simcse_sup  --per_device_eval_batch_size 16  --per_device_train_batch_size 16  --learning_rate 2e-5     --num_train_epochs 3   --output_dir C:/Users/Administrator/Desktop/yindechun/model/transformers4/simcse_nlpcc_scibert   --checkpointing_steps 2000
+<2000:2.7321252822875977>
+<4000:4.538190841674805>
+<2000:1.7465476989746094>
+<4000:3.7531967163085938>
+<2000:1.5785503387451172>
+<4000:3.169832706451416>
+
+----------
+sciberthm123_256_12 cb-ntr
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_12/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0746, 'accuracy': 0.7721063206263992, 'precision': 0.9188324266445629, 'recall': 0.8261188834041775, 'f1': 0.86461936879495, 'micro-precision': 0.9144686058552198, 'micro-recall': 0.8267855927010281, 'micro-f1': 0.8684194058804073};threshold:0.5800000000000001
+
+
+test
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/transformers4/sciberthm123_256_12     --train_file E:/data/nlpcct5/nlpcct5_hm123.py  --threshold 0.58  --max_length 256  --train_mode hm12 --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_12/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0358, 'accuracy': 0.7167122149889884, 'precision': 0.8925432064822003, 'recall': 0.7809790402512193, 'f1': 0.8265299099741261, 'micro-precision': 0.8872276556599206, 'micro-recall': 0.7810683170511312, 'micro-f1': 0.8307703467285652, 'threshold': 0.58}
+
+
+
+
+----------
+以下代码无效！！
 ----------
 wos_scibert_simcse_d1_r10_bs16
 在s4服务器上跑的
@@ -663,6 +822,7 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 
 C:/Users/Administrator/Desktop/yindechun/model/transformers4/wos_scibert_simcse_d1_r10\step_22000
 0.02
+
 
 step24000
 0.46
