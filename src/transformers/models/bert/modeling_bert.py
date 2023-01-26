@@ -2289,9 +2289,9 @@ class BertForSequenceClassification(BertPreTrainedModel):
                     # loss_func_name = 'FL'
                     # loss_func_name = 'CBloss'
                     # loss_func_name = 'R-BCE-Focal'
-                    loss_func_name = 'CBloss-ntr'
+                    # loss_func_name = 'CBloss-ntr'
                     # loss_func_name = 'DBloss'
-                    # loss_func_name = 'BCE'
+                    loss_func_name = 'BCE'
 
                     train_num = 85000
                     loss_fct = loss_choice(loss_func_name, self.label_num_list, train_num, model_config=None)

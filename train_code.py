@@ -786,8 +786,14 @@ python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model
 补充实验
 sciberthm123_256_13 iso + cbntr
 python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/iso_nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_13/   --checkpointing_steps 2000
+{'suset_accuracy': 0.0654, 'accuracy': 0.7649810657980244, 'precision': 0.4919094837494828, 'recall': 0.5418004391798211, 'f1': 0.49550806541325054,
+'micro-precision': 0.8559825512313427, 'micro-recall': 0.8678625651858208, 'micro-f1': 0.8618816221841633};threshold:0.52
 
 
+----------
+补充实验
+sciberthm123_256_14 iso + bce
+python ./examples/pytorch/text-classification/run_glue_no_trainer.py     --model_name_or_path E:/model/white_model/scibert     --train_file E:/data/nlpcct5/iso_nlpcct5_hm123_t.py   --max_length 256   --do_train True --train_mode hm12 --report_to wandb --with_tracking  --per_device_eval_batch_size 8  --per_device_train_batch_size 8  --learning_rate 2e-5     --num_train_epochs 3   --output_dir E:/model/transformers4/sciberthm123_256_14/   --checkpointing_steps 2000
 
 
 ----------
